@@ -2,6 +2,7 @@ module;
 #include <cstdint>
 #include <memory>
 #include <windows.h>
+#include <SDL2/SDL_video.h>
 export module Application;
 
 import VulkanRenderer;
@@ -17,7 +18,7 @@ namespace awesome::application
 	export class Application 
 	{
 	public:
-		static Application& Init(uint32_t width, uint32_t height, HWND windowHandle);
+		static Application& Init(uint32_t width, uint32_t height, SDL_Window*);
 		static void Destroy();
 		static bool IsInitialized();
 		static Application& Get();
@@ -29,7 +30,7 @@ namespace awesome::application
 		TimeManager& GetTimeManager() const;
 		InputManager& GetInputManager() const;
 	private:
-		Application(uint32_t width, uint32_t height, HWND windowHandle);
+		Application(uint32_t width, uint32_t height, SDL_Window*);
 		~Application();
 
 		static Application* INSTANCE;

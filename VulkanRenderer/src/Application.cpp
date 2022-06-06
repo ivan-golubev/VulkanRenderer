@@ -2,7 +2,7 @@ module;
 #include <cstdint>
 #include <DirectXMath.h>
 #include <memory>
-#include <windows.h>
+#include <SDL2/SDL_video.h>
 module Application;
 
 import VulkanRenderer;
@@ -19,7 +19,7 @@ namespace awesome::application
 {
 	Application* Application::INSTANCE{ nullptr };
 
-	Application& Application::Init(uint32_t width, uint32_t height, HWND windowHandle)
+	Application& Application::Init(uint32_t width, uint32_t height, SDL_Window* windowHandle)
 	{
 		assert(!INSTANCE);
 		if (!INSTANCE)
@@ -44,7 +44,7 @@ namespace awesome::application
 		return *INSTANCE;
 	}
 
-	Application::Application(uint32_t width, uint32_t height, HWND windowHandle)
+	Application::Application(uint32_t width, uint32_t height, SDL_Window* windowHandle)
 		: mTimeManager{ std::make_unique<TimeManager>() }
 		, mInputManager{ std::make_unique<InputManager>() }
 		, mRenderer{ std::make_unique<VulkanRenderer>(width, height, windowHandle)}

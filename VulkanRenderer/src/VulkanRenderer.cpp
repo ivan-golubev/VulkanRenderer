@@ -7,6 +7,13 @@ module;
 #include <windows.h>
 #include <pix3.h>
 #include <wrl.h>
+#include <SDL2/SDL_video.h>
+#include <glm/glm.hpp>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
+#include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.h>
+
 module VulkanRenderer;
 
 import Application;
@@ -34,7 +41,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace awesome::renderer {
 
-    VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, HWND windowHandle)
+    VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
         : mWidth{ width }
         , mHeight{ height }
         , mWindowHandle{ windowHandle }
@@ -43,9 +50,60 @@ namespace awesome::renderer {
         , mCamera{ std::make_unique<Camera>() }
     {
 
+        // Get WSI extensions from SDL (we can add more if we like - we just can't remove these)
+        unsigned extension_count;
+        if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr)) {
+            throw std::exception("Could not get the number of required instance extensions from SDL.");
+        }
+        std::vector<const char*> extensions(extension_count);
+        if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, extensions.data())) {
+            throw std::exception("Could not get the names of required instance extensions from SDL.");
+        }
+
+        std::vector<char const*> layers;
         if constexpr (IsDebug())
         { /* Enable the debug layer */
+            layers.emplace_back("VK_LAYER_KHRONOS_validation");
         }
+
+        // VkApplicationInfo allows the programmer to specifiy some basic information about the
+        // program, which can be useful for layers and tools to provide more debug information.
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pNext = nullptr;
+        appInfo.pApplicationName = "Vulkan Program Template";
+        appInfo.applicationVersion = 1;
+        appInfo.pEngineName = "Awesome Engine";
+        appInfo.engineVersion = 1;
+        appInfo.apiVersion = VK_API_VERSION_1_0;
+
+        // VkInstanceCreateInfo is where the programmer specifies the layers and/or extensions that
+        // are needed.
+        VkInstanceCreateInfo instInfo{};
+        instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instInfo.pNext = nullptr;
+        instInfo.flags = 0;
+        instInfo.pApplicationInfo = &appInfo;
+        instInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        instInfo.ppEnabledExtensionNames = extensions.data();
+        instInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
+        instInfo.ppEnabledLayerNames = layers.data();
+
+        // Create the Vulkan instance.
+        VkResult result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
+        if (result == VK_ERROR_INCOMPATIBLE_DRIVER) {
+            throw std::exception("Unable to find a compatible Vulkan Driver.");
+        }
+        else if (result) {
+            throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
+        }
+
+        // Create a Vulkan surface for rendering
+        if (!SDL_Vulkan_CreateSurface(windowHandle, mVkInstance, &mVkSurface)) {
+            throw std::exception("Could not create a Vulkan surface.");
+        }
+
+        ///////////////////////////////
 
         /* Create render targets */
         ResizeRenderTargets();
@@ -209,6 +267,11 @@ namespace awesome::renderer {
          cleaned up by the destructor. */
         WaitForPreviousFrame();
         //CloseHandle(mFenceEvent);
+
+        vkDestroySurfaceKHR(mVkInstance, mVkSurface, nullptr);
+        SDL_DestroyWindow(mWindowHandle);
+        SDL_Quit();
+        vkDestroyInstance(mVkInstance, nullptr);
     }
 
     void VulkanRenderer::OnWindowResized(uint32_t width, uint32_t height)

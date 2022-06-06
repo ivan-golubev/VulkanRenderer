@@ -4,6 +4,8 @@ module;
 #include <string>
 #include <vector>
 #include <windows.h>
+#include <SDL2/SDL_video.h>
+#include <SDL2/SDL_vulkan.h>
 export module VulkanRenderer;
 
 import Camera;
@@ -20,7 +22,7 @@ namespace awesome::renderer {
 
 	export class VulkanRenderer {
 	public:
-		VulkanRenderer(uint32_t width, uint32_t height, HWND windowHandle);
+		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(uint64_t deltaTimeMs);
@@ -43,7 +45,7 @@ namespace awesome::renderer {
 		static constexpr int8_t mFrameCount{ 2 };
 		uint32_t mWidth;
 		uint32_t mHeight;
-		HWND const mWindowHandle;
+		SDL_Window* mWindowHandle;
 		bool mWindowResized{ true };
 
 		//D3D12_VIEWPORT mViewport;
@@ -87,6 +89,8 @@ namespace awesome::renderer {
 
 		std::unique_ptr<Camera> mCamera;
 
+		VkInstance mVkInstance;
+		VkSurfaceKHR mVkSurface;
 		/* Synchronization objects */
 		//ComPtr<ID3D12Fence> mFence;
 		//uint32_t mFrameIndex{0};
