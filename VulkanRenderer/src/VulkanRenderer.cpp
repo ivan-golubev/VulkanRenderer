@@ -90,11 +90,13 @@ namespace awesome::renderer {
         instInfo.ppEnabledLayerNames = layers.data();
 
         // Create the Vulkan instance.
-        VkResult result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
-        if (result == VK_ERROR_INCOMPATIBLE_DRIVER) {
+        VkResult const result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
+        if (result == VK_ERROR_INCOMPATIBLE_DRIVER) 
+        {
             throw std::exception("Unable to find a compatible Vulkan Driver.");
         }
-        else if (result) {
+        else if (result) 
+        {
             throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
         }
 

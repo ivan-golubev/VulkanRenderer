@@ -80,5 +80,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\compile_shaders.ps1">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
