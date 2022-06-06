@@ -4,6 +4,7 @@ module;
 #include <DirectXMath.h>
 #include <format>
 #include <vector>
+#include <fstream>
 #include <windows.h>
 #include <pix3.h>
 #include <wrl.h>
@@ -40,6 +41,37 @@ using DirectX::XMVectorSet;
 using Microsoft::WRL::ComPtr;
 
 namespace awesome::renderer {
+
+    static std::vector<char> readFile(const std::string& filename) 
+    {
+        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+        if (!file.is_open()) 
+        {
+            throw std::runtime_error("failed to open file!");
+        }
+
+        size_t const fileSize = static_cast<size_t>(file.tellg());
+        std::vector<char> buffer(fileSize);
+        file.seekg(0);
+        file.read(buffer.data(), fileSize);
+        file.close();
+        return buffer;
+    }
+
+    VkShaderModule VulkanRenderer::createShaderModule(std::vector<char> const & shaderBlob)
+    {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = shaderBlob.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data());
+        VkShaderModule shaderModule;
+        if (vkCreateShaderModule(mVkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
+        {
+            throw std::runtime_error("failed to create shader module!");
+        }
+        return shaderModule;
+    }
 
     VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
         : mWidth{ width }
@@ -105,8 +137,6 @@ namespace awesome::renderer {
             throw std::exception("Could not create a Vulkan surface.");
         }
 
-        ///////////////////////////////
-
         /* Create render targets */
         ResizeRenderTargets();
         /* Create depth buffer */
@@ -114,9 +144,12 @@ namespace awesome::renderer {
 
         /* Read shaders */
         {
-            //ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_VS.cso", &mVertexShaderBlob));
-            //ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &mPixelShaderBlob));
-            // TODO: can I set the shader name ?
+            //TODO: create VkDevice before creating shader modules
+            __debugbreak();
+            std::vector<char> vertexShaderBlob = readFile("shaders//colored_surface_VS.spv");
+            std::vector<char> pixelShaderBlob = readFile("shaders//colored_surface_PS.spv");
+            mVertexShader = createShaderModule(vertexShaderBlob);
+            mPixelShader = createShaderModule(pixelShaderBlob);
         }
         UploadGeometry();
     }

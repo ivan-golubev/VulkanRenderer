@@ -23,6 +23,6 @@ foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 	if($IsFinal) {
 		$AdditionalParamsPS=$AdditionalParamsVS="-Qstrip_debug"		
 	}
-	& $Compiler -T vs_${ShaderModel} -E vs_main @AdditionalParamsVS $file -Fo ${OutputDir}\${Entry}_VS.cso
-	& $Compiler -T ps_${ShaderModel} -E ps_main @AdditionalParamsPS $file -Fo ${OutputDir}\${Entry}_PS.cso
+	& $Compiler -T vs_${ShaderModel} -E vs_main @AdditionalParamsVS $file -Fo ${OutputDir}\${Entry}_VS.spv
+	& $Compiler -T ps_${ShaderModel} -E ps_main @AdditionalParamsPS $file -Fo ${OutputDir}\${Entry}_PS.spv
 }

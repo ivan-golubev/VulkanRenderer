@@ -5,7 +5,7 @@ module;
 #include <vector>
 #include <windows.h>
 #include <SDL2/SDL_video.h>
-#include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.h>
 export module VulkanRenderer;
 
 import Camera;
@@ -33,6 +33,8 @@ namespace awesome::renderer {
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
+
+		VkShaderModule createShaderModule(std::vector<char> const& shaderBlob);
 		//void CreateBuffer(
 		//	ComPtr<ID3D12GraphicsCommandList> const & commandList, 
 		//	ComPtr<ID3D12Resource> & gpuResource, 
@@ -81,14 +83,15 @@ namespace awesome::renderer {
 		//D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
 
 		/* Shaders */
-		//ComPtr<ID3DBlob> mVertexShaderBlob;
-		//ComPtr<ID3DBlob> mPixelShaderBlob;
+		VkShaderModule mVertexShader;
+		VkShaderModule mPixelShader;
 
 		/* TODO: move this to a "game_object" class */
 		uint32_t mIndexCount;
 
 		std::unique_ptr<Camera> mCamera;
 
+		VkDevice mVkDevice;
 		VkInstance mVkInstance;
 		VkSurfaceKHR mVkSurface;
 		/* Synchronization objects */
