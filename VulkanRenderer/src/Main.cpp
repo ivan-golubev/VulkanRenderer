@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <exception>
 #include <format>
+#include <cstdlib>
 
 import Application;
 import ErrorHandling;
@@ -40,10 +41,10 @@ int main()
         DebugLog(DebugLevel::Error, L"Could not initialize SDL");
         return EXIT_FAILURE;
     }
-    uint32_t const Width{ 1920 };
-    uint32_t const Height{ 1080 };
+    uint32_t const width{ 1920 };
+    uint32_t const height{ 1080 };
 
-    SDL_Window* window = SDL_CreateWindow("Vulkan Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Width, Height, SDL_WINDOW_VULKAN);
+    SDL_Window* window = SDL_CreateWindow("Vulkan Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN);
     if(nullptr == window) 
     {
         DebugLog(DebugLevel::Error, L"Could not create SDL window");
@@ -52,7 +53,7 @@ int main()
 
     try
     {
-        Application::Init(Width, Height, window);
+        Application::Init(width, height, window);
         DebugLog(DebugLevel::Info, L"Successfully initialized the Vulkan application");
     }
     catch (std::exception const& e)

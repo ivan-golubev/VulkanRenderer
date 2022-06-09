@@ -23,6 +23,7 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(uint64_t deltaTimeMs);
 	private:
+		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
 		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
 		void WaitForPreviousFrame();
 		void UploadGeometry();

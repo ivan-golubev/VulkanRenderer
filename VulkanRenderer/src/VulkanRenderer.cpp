@@ -69,12 +69,11 @@ namespace gg {
         , mCamera{ std::make_unique<Camera>() }
     {
 
-        // Get WSI extensions from SDL (we can add more if we like - we just can't remove these)
         unsigned extension_count;
         if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr)) {
             throw std::exception("Could not get the number of required instance extensions from SDL.");
         }
-        std::vector<const char*> extensions(extension_count);
+        std::vector<char const*> extensions(extension_count);
         if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, extensions.data())) {
             throw std::exception("Could not get the names of required instance extensions from SDL.");
         }
@@ -85,39 +84,7 @@ namespace gg {
             layers.emplace_back("VK_LAYER_KHRONOS_validation");
         }
 
-        // VkApplicationInfo allows the programmer to specifiy some basic information about the
-        // program, which can be useful for layers and tools to provide more debug information.
-        VkApplicationInfo appInfo{};
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pNext = nullptr;
-        appInfo.pApplicationName = "Vulkan Program Template";
-        appInfo.applicationVersion = 1;
-        appInfo.pEngineName = "Awesome Engine";
-        appInfo.engineVersion = 1;
-        appInfo.apiVersion = VK_API_VERSION_1_0;
-
-        // VkInstanceCreateInfo is where the programmer specifies the layers and/or extensions that
-        // are needed.
-        VkInstanceCreateInfo instInfo{};
-        instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instInfo.pNext = nullptr;
-        instInfo.flags = 0;
-        instInfo.pApplicationInfo = &appInfo;
-        instInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-        instInfo.ppEnabledExtensionNames = extensions.data();
-        instInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
-        instInfo.ppEnabledLayerNames = layers.data();
-
-        // Create the Vulkan instance.
-        VkResult const result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
-        if (result == VK_ERROR_INCOMPATIBLE_DRIVER) 
-        {
-            throw std::exception("Unable to find a compatible Vulkan Driver.");
-        }
-        else if (result) 
-        {
-            throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
-        }
+        CreateVkInstance(layers, extensions);
 
         // Create a Vulkan surface for rendering
         if (!SDL_Vulkan_CreateSurface(windowHandle, mVkInstance, &mVkSurface)) {
@@ -139,6 +106,38 @@ namespace gg {
             mPixelShader = createShaderModule(pixelShaderBlob);
         }
         UploadGeometry();
+    }
+
+    void VulkanRenderer::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
+    {
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pNext = nullptr;
+        appInfo.pApplicationName = "gg Vulkan Renderer";
+        appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+        appInfo.pEngineName = "gg Engine";
+        appInfo.engineVersion = VK_API_VERSION_1_0;
+        appInfo.apiVersion = VK_API_VERSION_1_0;
+
+        VkInstanceCreateInfo instInfo{};
+        instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instInfo.pNext = nullptr;
+        instInfo.flags = 0;
+        instInfo.pApplicationInfo = &appInfo;
+        instInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        instInfo.ppEnabledExtensionNames = extensions.data();
+        instInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
+        instInfo.ppEnabledLayerNames = layers.data();
+
+        VkResult const result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
+        if (VK_ERROR_INCOMPATIBLE_DRIVER == result)
+        {
+            throw std::exception("Unable to find a compatible Vulkan Driver.");
+        }
+        else if (result)
+        {
+            throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
+        }
     }
 
     void VulkanRenderer::UploadGeometry()
