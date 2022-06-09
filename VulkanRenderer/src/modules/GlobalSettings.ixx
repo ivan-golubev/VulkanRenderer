@@ -1,6 +1,6 @@
 export module GlobalSettings;
 
-export namespace awesome::globals 
+export namespace gg 
 {
     inline constexpr bool IsDebug() 
     {
@@ -28,4 +28,4 @@ export namespace awesome::globals
         return true;
 #endif
     }
-} // namespace awesome::globals
+} // namespace gg

@@ -2,7 +2,7 @@ module;
 #include <string>
 export module Logging;
 
-export namespace awesome::logging
+export namespace gg
 {
 	enum class DebugLevel
 	{
@@ -15,4 +15,4 @@ export namespace awesome::logging
 
 	std::wstring ToWString(std::string const &);
 
-} // namespace awesome::logging
+} // namespace gg

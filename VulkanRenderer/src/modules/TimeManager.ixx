@@ -2,7 +2,7 @@ module;
 #include <cstdint>
 export module TimeManager;
 
-namespace awesome::time 
+namespace gg 
 {
 	export class TimeManager {
 	public:
@@ -16,4 +16,4 @@ namespace awesome::time
 		uint64_t currentTimeTicks{ 0 };
 		uint64_t startTimeTicks{ 0 };
 	};
-} // namespace awesome::time
+} // namespace gg

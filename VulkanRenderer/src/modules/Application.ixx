@@ -9,11 +9,7 @@ import VulkanRenderer;
 import Input;
 import TimeManager;
 
-using awesome::input::InputManager;
-using awesome::renderer::VulkanRenderer;
-using awesome::time::TimeManager;
-
-namespace awesome::application 
+namespace gg 
 {
 	export class Application 
 	{
@@ -39,4 +35,4 @@ namespace awesome::application
 		std::unique_ptr<InputManager> mInputManager{};
 		std::unique_ptr<VulkanRenderer> mRenderer{};
 	};
-} // namespace awesome::application 
+} // namespace gg 

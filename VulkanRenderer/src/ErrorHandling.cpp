@@ -5,7 +5,7 @@ module;
 #include <windows.h>
 module ErrorHandling;
 
-namespace awesome::errorhandling 
+namespace gg 
 {
 	ComException::ComException(HRESULT hr) : returnCode{ hr } 
 	{}
@@ -28,4 +28,4 @@ namespace awesome::errorhandling
 			throw ComException(hr);
 	}
 
-} // awesome::errorhandling
+} // namespace gg

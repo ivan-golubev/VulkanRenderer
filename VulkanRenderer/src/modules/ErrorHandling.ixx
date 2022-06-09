@@ -4,7 +4,7 @@ module;
 #include <windows.h>
 export module ErrorHandling;
 
-namespace awesome::errorhandling
+namespace gg
 {
 	export class ComException : public std::exception
 	{
@@ -17,4 +17,4 @@ namespace awesome::errorhandling
 	};
 
 	export void ThrowIfFailed(HRESULT hr);
-} // awesome::errorhandling
+} // namespace gg

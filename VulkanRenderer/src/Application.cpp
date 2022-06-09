@@ -10,12 +10,7 @@ import Input;
 import Logging;
 import TimeManager;
 
-using awesome::input::InputManager;
-using awesome::renderer::VulkanRenderer;
-using awesome::time::TimeManager;
-using namespace awesome::logging;
-
-namespace awesome::application
+namespace gg
 {
 	Application* Application::INSTANCE{ nullptr };
 
@@ -85,4 +80,4 @@ namespace awesome::application
 		mInputManager->OnWindowMessage(uMsg, wParam);
 	}
 
-} // namespace awesome::application 
+} // namespace gg 

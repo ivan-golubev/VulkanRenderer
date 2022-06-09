@@ -6,9 +6,7 @@ module Logging;
 
 import GlobalSettings;
 
-using namespace awesome::globals;
-
-namespace awesome::logging
+namespace gg
 {
 	static void PrintToVSDebugConsole(DebugLevel debugLevel, wchar_t const* message)
 	{
@@ -45,4 +43,4 @@ namespace awesome::logging
 		return wstrTo;
 	}
 
-} // namespace awesome::logging
+} // namespace gg

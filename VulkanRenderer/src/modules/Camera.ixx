@@ -6,7 +6,7 @@ export module Camera;
 using DirectX::XMMATRIX;
 using DirectX::XMVECTOR;
 
-export namespace awesome::camera {
+export namespace gg {
 
 	class Camera
 	{
@@ -23,4 +23,4 @@ export namespace awesome::camera {
 		XMVECTOR mFocusPoint{ 0.f, 0.f, 0.f, 1.f };
 	};
 
-} // namespace awesome::camera
+} // namespace gg

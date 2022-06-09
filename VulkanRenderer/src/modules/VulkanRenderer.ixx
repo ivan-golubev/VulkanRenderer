@@ -13,12 +13,8 @@ import Input;
 import Vertex;
 import TimeManager;
 
-using awesome::camera::Camera;
-using awesome::input::InputManager;
-using awesome::structs::Vertex;
-using awesome::time::TimeManager;
-
-namespace awesome::renderer {
+namespace gg 
+{
 
 	export class VulkanRenderer {
 	public:
@@ -101,4 +97,4 @@ namespace awesome::renderer {
 		//HANDLE mFenceEvent{nullptr};
 	};
 
-} // namespace awesome::renderer
+} // namespace gg

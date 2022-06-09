@@ -3,7 +3,7 @@ module;
 #include <windows.h>
 module Input;
 
-namespace awesome::input
+namespace gg
 {
 	void InputManager::OnWindowMessage(uint32_t uMsg, uint32_t wParam) 
 	{
@@ -50,4 +50,4 @@ namespace awesome::input
 		return static_cast<float>(PlayerSpeed / 1000 * deltaMs);
 	}
 
-} // namespace awesome::input
+} // namespace gg

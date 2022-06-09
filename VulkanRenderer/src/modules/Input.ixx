@@ -2,7 +2,7 @@ module;
 #include <cstdint>
 export module Input;
 
-export namespace awesome::input
+export namespace gg
 {
 	enum InputAction {
 		RaiseCamera,
@@ -30,4 +30,4 @@ export namespace awesome::input
 		static constexpr float PlayerSpeed{ 1.5f };
 	};
 
-} // namespace awesome::input
+} // namespace gg

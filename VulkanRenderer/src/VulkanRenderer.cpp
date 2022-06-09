@@ -24,23 +24,10 @@ import GlobalSettings;
 import Input;
 import Vertex;
 
-using awesome::application::Application;
-using awesome::camera::Camera;
-using awesome::errorhandling::ThrowIfFailed;
-using awesome::globals::IsDebug;
-using awesome::input::InputManager;
-using awesome::structs::Vertex;
-using DirectX::FXMVECTOR;
-using DirectX::XMConvertToRadians;
-using DirectX::XMMATRIX;
-using DirectX::XMMatrixIdentity;
-using DirectX::XMMatrixPerspectiveFovLH;
-using DirectX::XMMatrixRotationY;
-using DirectX::XMMatrixRotationZ;
-using DirectX::XMVectorSet;
+using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-namespace awesome::renderer {
+namespace gg {
 
     static std::vector<char> readFile(const std::string& filename) 
     {
@@ -411,4 +398,4 @@ namespace awesome::renderer {
     //    ThrowIfFailed(mCommandList->Close());
     //}
 
-} // namespace awesome::renderer
+} // namespace gg

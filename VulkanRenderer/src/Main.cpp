@@ -6,8 +6,7 @@ import Application;
 import ErrorHandling;
 import Logging;
 
-using awesome::application::Application;
-using namespace awesome::logging;
+using namespace gg;
 
 void MainLoop()
 {
@@ -39,7 +38,7 @@ int main()
     if(SDL_Init(SDL_INIT_VIDEO) != 0) 
     {
         DebugLog(DebugLevel::Error, L"Could not initialize SDL");
-        return 1;
+        return EXIT_FAILURE;
     }
     uint32_t const Width{ 1920 };
     uint32_t const Height{ 1080 };
@@ -48,7 +47,7 @@ int main()
     if(nullptr == window) 
     {
         DebugLog(DebugLevel::Error, L"Could not create SDL window");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     try
@@ -60,10 +59,10 @@ int main()
     {
         std::wstring const errorMsg = ToWString(std::format("Caught exception with message: {}", e.what()));
         DebugLog(DebugLevel::Error, errorMsg);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     MainLoop();
     Application::Destroy();
-    return 0;
+    return EXIT_SUCCESS;
 }

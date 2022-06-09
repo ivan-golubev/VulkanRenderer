@@ -5,20 +5,9 @@ module Camera;
 import Input;
 import Application;
 
-using awesome::application::Application;
-using awesome::input::InputAction;
-using awesome::input::InputManager;
-using DirectX::XMConvertToRadians;
-using DirectX::XMMATRIX;
-using DirectX::XMMatrixLookAtLH;
-using DirectX::XMMatrixPerspectiveFovLH;
-using DirectX::XMVECTOR;
-using DirectX::XMFLOAT3;
-using DirectX::XMVectorAdd;
-using DirectX::XMVectorScale;
-using DirectX::XMVectorSubtract;
+using namespace DirectX;
 
-namespace awesome::camera {
+namespace gg {
     constexpr float CAM_MOVE_SPEED{ 5.f }; // in metres per second
     constexpr float CAM_TURN_SPEED{ DirectX::XM_PI }; // in radians per second
     constexpr float FOV{ 90.f };
@@ -83,4 +72,4 @@ namespace awesome::camera {
     XMMATRIX const & Camera::GetViewMatrix() const { return mViewMatrix; }
     XMMATRIX const & Camera::GetProjectionMatrix() const { return mProjectionMatrix; }
 
-} // namespace awesome::camera
+} // namespace gg

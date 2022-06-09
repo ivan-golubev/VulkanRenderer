@@ -4,7 +4,7 @@ module;
 #include <windows.h>
 module TimeManager;
 
-namespace awesome::time
+namespace gg
 {
 	TimeManager::TimeManager() 
 	{
@@ -43,4 +43,4 @@ namespace awesome::time
 	{
 		return static_cast<float> (GetCurrentTimeTicks() / ticksPerSec);
 	}
-} // namespace awesome::time
+} // namespace gg
