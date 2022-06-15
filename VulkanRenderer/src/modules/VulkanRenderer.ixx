@@ -24,6 +24,8 @@ namespace gg
 		void Render(uint64_t deltaTimeMs);
 	private:
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
+		void SelectPhysicalDevice();
+		void CreateLogicalDevice();
 		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
 		void WaitForPreviousFrame();
 		void UploadGeometry();
@@ -90,6 +92,8 @@ namespace gg
 
 		VkDevice mVkDevice;
 		VkInstance mVkInstance;
+		VkPhysicalDevice mVkPhysicalDevice;
+		VkQueue mVkGraphicsQueue;
 		VkSurfaceKHR mVkSurface;
 		/* Synchronization objects */
 		//ComPtr<ID3D12Fence> mFence;

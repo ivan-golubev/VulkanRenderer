@@ -3,17 +3,19 @@ module;
 #include <cstdint>
 #include <DirectXMath.h>
 #include <format>
-#include <vector>
 #include <fstream>
-#include <windows.h>
-#include <pix3.h>
-#include <wrl.h>
-#include <SDL2/SDL_video.h>
 #include <glm/glm.hpp>
+#include <optional>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#include <SDL2/SDL_video.h>
 #include <SDL2/SDL_vulkan.h>
+#include <vector>
 #include <vulkan/vulkan.h>
+#include <windows.h>
+#include <wrl.h>
+
+#include <pix3.h> // has to be the last - depends on types in windows.h
 
 module VulkanRenderer;
 
@@ -64,12 +66,13 @@ namespace gg {
         : mWidth{ width }
         , mHeight{ height }
         , mWindowHandle{ windowHandle }
+        , mVkPhysicalDevice{ VK_NULL_HANDLE }
         //, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
         //, mViewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
         , mCamera{ std::make_unique<Camera>() }
     {
 
-        unsigned extension_count;
+        uint32_t extension_count;
         if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr)) {
             throw std::exception("Could not get the number of required instance extensions from SDL.");
         }
@@ -85,6 +88,10 @@ namespace gg {
         }
 
         CreateVkInstance(layers, extensions);
+        SelectPhysicalDevice();
+        CreateLogicalDevice();
+
+        __debugbreak(); // TODO: make sure the surface is create at the right time
 
         // Create a Vulkan surface for rendering
         if (!SDL_Vulkan_CreateSurface(windowHandle, mVkInstance, &mVkSurface)) {
@@ -98,8 +105,6 @@ namespace gg {
 
         /* Read shaders */
         {
-            //TODO: create VkDevice before creating shader modules
-            __debugbreak();
             std::vector<char> vertexShaderBlob = readFile("shaders//colored_surface_VS.spv");
             std::vector<char> pixelShaderBlob = readFile("shaders//colored_surface_PS.spv");
             mVertexShader = createShaderModule(vertexShaderBlob);
@@ -112,7 +117,6 @@ namespace gg {
     {
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pNext = nullptr;
         appInfo.pApplicationName = "gg Vulkan Renderer";
         appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
         appInfo.pEngineName = "gg Engine";
@@ -121,7 +125,6 @@ namespace gg {
 
         VkInstanceCreateInfo instInfo{};
         instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instInfo.pNext = nullptr;
         instInfo.flags = 0;
         instInfo.pApplicationInfo = &appInfo;
         instInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
@@ -138,6 +141,90 @@ namespace gg {
         {
             throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
         }
+    }
+
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+        bool IsComplete() const { return graphicsFamily.has_value(); }
+    };
+
+    static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const device)
+    {
+        uint32_t queueFamilyCount{ 0 };
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        QueueFamilyIndices indices{};
+        int i = 0;
+        for (auto const& q : queueFamilies)
+        {
+            if (q.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                indices.graphicsFamily = i;
+            if (indices.IsComplete())
+                break;
+            i++;
+        }
+        return indices;
+    }
+
+    static bool IsDeviceSuitable(VkPhysicalDevice const device)
+    {
+        VkPhysicalDeviceProperties deviceProperties;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+        return VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == deviceProperties.deviceType
+            && FindQueueFamilies(device).IsComplete();
+    }
+
+    void VulkanRenderer::SelectPhysicalDevice()
+    {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(mVkInstance, &deviceCount, nullptr);
+        if (0 == deviceCount)
+        {
+            throw std::runtime_error("failed to find GPUs with Vulkan support!");
+        }
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(mVkInstance, &deviceCount, devices.data());
+        for (auto const & d : devices)
+        {
+            if (IsDeviceSuitable(d))
+            {
+                mVkPhysicalDevice = d;
+                break;
+            }
+        }
+        if (VK_NULL_HANDLE == mVkPhysicalDevice) 
+        {
+            throw std::runtime_error("failed to find a suitable GPU!");
+        }
+    }
+
+    void VulkanRenderer::CreateLogicalDevice()
+    {
+        QueueFamilyIndices indices = FindQueueFamilies(mVkPhysicalDevice);
+
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+        float queuePriority = 1.0f;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+        VkDeviceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.pQueueCreateInfos = &queueCreateInfo;
+        createInfo.queueCreateInfoCount = 1;
+        createInfo.pEnabledFeatures = &deviceFeatures;
+        if (VK_SUCCESS != vkCreateDevice(mVkPhysicalDevice, &createInfo, nullptr, &mVkDevice))
+        {
+            throw std::runtime_error("failed to create logical device!");
+        }
+        vkGetDeviceQueue(mVkDevice, indices.graphicsFamily.value(), 0, &mVkGraphicsQueue);
     }
 
     void VulkanRenderer::UploadGeometry()
@@ -292,6 +379,7 @@ namespace gg {
         vkDestroySurfaceKHR(mVkInstance, mVkSurface, nullptr);
         SDL_DestroyWindow(mWindowHandle);
         SDL_Quit();
+        vkDestroyDevice(mVkDevice, nullptr);
         vkDestroyInstance(mVkInstance, nullptr);
     }
 
