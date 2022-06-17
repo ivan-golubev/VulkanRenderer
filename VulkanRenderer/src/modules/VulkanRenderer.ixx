@@ -24,9 +24,10 @@ namespace gg
 		void Render(uint64_t deltaTimeMs);
 	private:
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
-		void CreateSwapChain();
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
+		void CreateSwapChain();
+		void CreateImageViews();
 		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
 		void WaitForPreviousFrame();
 		void UploadGeometry();
@@ -85,12 +86,9 @@ namespace gg
 
 		/* Render Targets */
 		std::vector<VkImage> mSwapChainImages;
+		std::vector<VkImageView> mSwapChainImageViews;
 		VkFormat mSwapChainImageFormat;
 		VkExtent2D mSwapChainExtent;
-		//ComPtr<ID3D12Resource> mRenderTargets[mFrameCount];
-		//CD3DX12_CPU_DESCRIPTOR_HANDLE mRtvHandles[mFrameCount];
-		//ComPtr<ID3D12DescriptorHeap> mRenderTargetViewHeap;
-		//uint32_t mRtvDescriptorSize;
 
 		///* Depth */
 		//ComPtr<ID3D12Resource> mDepthBuffer;
