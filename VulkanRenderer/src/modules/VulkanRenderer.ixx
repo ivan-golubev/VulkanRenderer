@@ -1,6 +1,7 @@
 module;
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -15,7 +16,6 @@ import TimeManager;
 
 namespace gg 
 {
-
 	export class VulkanRenderer {
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
@@ -32,6 +32,26 @@ namespace gg
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
+
+		struct QueueFamilyIndices
+		{
+			std::optional<uint32_t> graphicsFamily;
+			std::optional<uint32_t> presentFamily;
+			bool IsComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
+		};
+
+		struct SwapChainSupportDetails
+		{
+			VkSurfaceCapabilitiesKHR capabilities;
+			std::vector<VkSurfaceFormatKHR> formats;
+			std::vector<VkPresentModeKHR> presentModes;
+		};
+
+		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
+		bool IsDeviceSuitable(VkPhysicalDevice const) const;
+
+		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice const) const;
+		bool SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
 
 		VkShaderModule createShaderModule(std::vector<char> const& shaderBlob);
 		//void CreateBuffer(
