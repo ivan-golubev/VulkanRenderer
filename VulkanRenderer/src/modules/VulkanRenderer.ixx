@@ -24,6 +24,7 @@ namespace gg
 		void Render(uint64_t deltaTimeMs);
 	private:
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
+		void CreateSwapChain();
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
 		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
@@ -53,6 +54,8 @@ namespace gg
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice const) const;
 		bool SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
 
+		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
+
 		VkShaderModule createShaderModule(std::vector<char> const& shaderBlob);
 		//void CreateBuffer(
 		//	ComPtr<ID3D12GraphicsCommandList> const & commandList, 
@@ -80,7 +83,10 @@ namespace gg
 		//ComPtr<ID3D12PipelineState> mPipelineState;
 		//ComPtr<ID3D12RootSignature> mRootSignature;
 
-		///* Render Targets */
+		/* Render Targets */
+		std::vector<VkImage> mSwapChainImages;
+		VkFormat mSwapChainImageFormat;
+		VkExtent2D mSwapChainExtent;
 		//ComPtr<ID3D12Resource> mRenderTargets[mFrameCount];
 		//CD3DX12_CPU_DESCRIPTOR_HANDLE mRtvHandles[mFrameCount];
 		//ComPtr<ID3D12DescriptorHeap> mRenderTargetViewHeap;
@@ -103,18 +109,19 @@ namespace gg
 
 		/* Shaders */
 		VkShaderModule mVertexShader;
-		VkShaderModule mPixelShader;
+		VkShaderModule mFragmentShader;
 
 		/* TODO: move this to a "game_object" class */
 		uint32_t mIndexCount;
 
 		std::unique_ptr<Camera> mCamera;
 
-		VkDevice mVkDevice;
-		VkInstance mVkInstance;
-		VkPhysicalDevice mVkPhysicalDevice;
-		VkQueue mVkGraphicsQueue;
-		VkSurfaceKHR mVkSurface;
+		VkDevice mDevice;
+		VkInstance mInstance;
+		VkPhysicalDevice mPhysicalDevice;
+		VkQueue mGraphicsQueue;
+		VkSurfaceKHR mSurface;
+		VkSwapchainKHR mSwapChain;
 		/* Synchronization objects */
 		//ComPtr<ID3D12Fence> mFence;
 		//uint32_t mFrameIndex{0};

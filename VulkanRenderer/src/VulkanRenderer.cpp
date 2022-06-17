@@ -5,6 +5,7 @@ module;
 #include <format>
 #include <fstream>
 #include <glm/glm.hpp>
+#include <limits>
 #include <optional>
 #include <set>
 #include <SDL2/SDL.h>
@@ -56,7 +57,7 @@ namespace gg {
         createInfo.codeSize = shaderBlob.size();
         createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data());
         VkShaderModule shaderModule;
-        if (vkCreateShaderModule(mVkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
+        if (vkCreateShaderModule(mDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
         {
             throw std::runtime_error("failed to create shader module!");
         }
@@ -67,7 +68,7 @@ namespace gg {
         : mWidth{ width }
         , mHeight{ height }
         , mWindowHandle{ windowHandle }
-        , mVkPhysicalDevice{ VK_NULL_HANDLE }
+        , mPhysicalDevice{ VK_NULL_HANDLE }
         //, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
         //, mViewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
         , mCamera{ std::make_unique<Camera>() }
@@ -93,13 +94,14 @@ namespace gg {
         CreateVkInstance(layers, extensions);
         
         /* Create a surface for rendering */
-        if (!SDL_Vulkan_CreateSurface(windowHandle, mVkInstance, &mVkSurface))
+        if (!SDL_Vulkan_CreateSurface(windowHandle, mInstance, &mSurface))
         {
             throw std::exception("Could not create a Vulkan surface.");
         }
 
         SelectPhysicalDevice();
         CreateLogicalDevice();
+        CreateSwapChain();
 
         /* Create render targets */
         ResizeRenderTargets();
@@ -109,9 +111,9 @@ namespace gg {
         /* Read shaders */
         {
             std::vector<char> vertexShaderBlob = readFile("shaders//colored_surface_VS.spv");
-            std::vector<char> pixelShaderBlob = readFile("shaders//colored_surface_PS.spv");
+            std::vector<char> fragmentShaderBlob = readFile("shaders//colored_surface_PS.spv");
             mVertexShader = createShaderModule(vertexShaderBlob);
-            mPixelShader = createShaderModule(pixelShaderBlob);
+            mFragmentShader = createShaderModule(fragmentShaderBlob);
         }
         UploadGeometry();
     }
@@ -135,7 +137,7 @@ namespace gg {
         instInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
         instInfo.ppEnabledLayerNames = layers.data();
 
-        VkResult const result = vkCreateInstance(&instInfo, nullptr, &mVkInstance);
+        VkResult const result = vkCreateInstance(&instInfo, nullptr, &mInstance);
         if (VK_ERROR_INCOMPATIBLE_DRIVER == result)
         {
             throw std::exception("Unable to find a compatible Vulkan Driver.");
@@ -144,6 +146,89 @@ namespace gg {
         {
             throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
         }
+    }
+
+    static VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const & availableFormats) 
+    {
+        for (auto const& availableFormat : availableFormats) 
+            if (VK_FORMAT_B8G8R8A8_SRGB == availableFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace)
+                return availableFormat;
+        return availableFormats[0];
+    }
+
+    static VkPresentModeKHR chooseSwapPresentMode(std::vector<VkPresentModeKHR> const & availablePresentModes) 
+    {
+        for (auto const& m : availablePresentModes)
+            if (VK_PRESENT_MODE_MAILBOX_KHR == m)
+                return m;
+        return VK_PRESENT_MODE_FIFO_KHR;
+    }
+
+    VkExtent2D VulkanRenderer::ChooseSwapExtent(VkSurfaceCapabilitiesKHR const& capabilities) const
+    {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) 
+            return capabilities.currentExtent;
+        else
+        {
+            int width, height;
+            SDL_Vulkan_GetDrawableSize(mWindowHandle, &width, &height);
+
+            return 
+            {
+                std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+                std::clamp(static_cast<uint32_t>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
+            };
+        }
+    }
+
+    void VulkanRenderer::CreateSwapChain()
+    {
+        SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(mPhysicalDevice) };
+        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+        VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+        
+        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) 
+        {
+            imageCount = swapChainSupport.capabilities.maxImageCount;
+        }
+        VkSwapchainCreateInfoKHR createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        createInfo.surface = mSurface;
+        createInfo.minImageCount = imageCount;
+        createInfo.imageFormat = surfaceFormat.format;
+        createInfo.imageColorSpace = surfaceFormat.colorSpace;
+        createInfo.imageExtent = extent;
+        createInfo.imageArrayLayers = 1;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+        QueueFamilyIndices indices{ FindQueueFamilies(mPhysicalDevice) };
+        uint32_t queueFamilyIndices[] { indices.graphicsFamily.value(), indices.presentFamily.value() };
+        if (indices.graphicsFamily != indices.presentFamily) 
+        {
+            createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            createInfo.queueFamilyIndexCount = 2;
+            createInfo.pQueueFamilyIndices = queueFamilyIndices;
+        }
+        else 
+            createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+        createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        createInfo.presentMode = presentMode;
+        createInfo.clipped = VK_TRUE;
+        if (VK_SUCCESS != vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, &mSwapChain))
+        {
+            throw std::runtime_error("Failed to create swap chain!");
+        }
+        /* Retrieve the swap chain images to render to */
+        vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, nullptr);
+        mSwapChainImages.resize(imageCount);
+        vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, mSwapChainImages.data());
+
+        mSwapChainImageFormat = surfaceFormat.format;
+        mSwapChainExtent = extent;
     }
 
     VulkanRenderer::QueueFamilyIndices VulkanRenderer::FindQueueFamilies(VkPhysicalDevice const device) const
@@ -162,7 +247,7 @@ namespace gg {
                 indices.graphicsFamily = i;
 
             VkBool32 presentSupport{ false };
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mVkSurface, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mSurface, &presentSupport);
 
             if (presentSupport) {
                 indices.presentFamily = i;
@@ -180,7 +265,7 @@ namespace gg {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    static bool CheckDeviceExtensionSupport(VkPhysicalDevice const device) 
+    static bool checkDeviceExtensionSupport(VkPhysicalDevice const device) 
     {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -201,21 +286,24 @@ namespace gg {
     VulkanRenderer::SwapChainSupportDetails VulkanRenderer::QuerySwapChainSupport(VkPhysicalDevice device) const
     {
         SwapChainSupportDetails details{};
+
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.capabilities);
+
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, mVkSurface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
 
         if (0 != formatCount) 
         {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, mVkSurface, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
         }
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, mVkSurface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
 
         if (0 != presentModeCount) {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, mVkSurface, &presentModeCount, details.presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
         }
 
         return details;
@@ -233,7 +321,7 @@ namespace gg {
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
         return VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == deviceProperties.deviceType
-            && CheckDeviceExtensionSupport(device)
+            && checkDeviceExtensionSupport(device)
             && SwapChainRequirementsSatisfied(device)
             && FindQueueFamilies(device).IsComplete();
     }
@@ -241,22 +329,22 @@ namespace gg {
     void VulkanRenderer::SelectPhysicalDevice()
     {
         uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(mVkInstance, &deviceCount, nullptr);
+        vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
         if (0 == deviceCount)
         {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
         std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(mVkInstance, &deviceCount, devices.data());
+        vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
         for (auto const & d : devices)
         {
             if (IsDeviceSuitable(d))
             {
-                mVkPhysicalDevice = d;
+                mPhysicalDevice = d;
                 break;
             }
         }
-        if (VK_NULL_HANDLE == mVkPhysicalDevice) 
+        if (VK_NULL_HANDLE == mPhysicalDevice) 
         {
             throw std::runtime_error("failed to find a suitable GPU!");
         }
@@ -264,7 +352,7 @@ namespace gg {
 
     void VulkanRenderer::CreateLogicalDevice()
     {
-        QueueFamilyIndices indices{ FindQueueFamilies(mVkPhysicalDevice) };
+        QueueFamilyIndices indices{ FindQueueFamilies(mPhysicalDevice) };
         std::set<uint32_t> uniqueQueueFamilies{ indices.graphicsFamily.value(), indices.presentFamily.value() };
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
 
@@ -286,11 +374,11 @@ namespace gg {
         createInfo.pEnabledFeatures = &deviceFeatures;
         createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-        if (VK_SUCCESS != vkCreateDevice(mVkPhysicalDevice, &createInfo, nullptr, &mVkDevice))
+        if (VK_SUCCESS != vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mDevice))
         {
             throw std::runtime_error("failed to create logical device!");
         }
-        vkGetDeviceQueue(mVkDevice, indices.graphicsFamily.value(), 0, &mVkGraphicsQueue);
+        vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);
     }
 
     void VulkanRenderer::UploadGeometry()
@@ -442,11 +530,16 @@ namespace gg {
         WaitForPreviousFrame();
         //CloseHandle(mFenceEvent);
 
-        vkDestroySurfaceKHR(mVkInstance, mVkSurface, nullptr);
+        vkDestroyShaderModule(mDevice, mVertexShader, nullptr);
+        vkDestroyShaderModule(mDevice, mFragmentShader, nullptr);
+
+        vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
+        vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+        vkDestroyDevice(mDevice, nullptr);
+        vkDestroyInstance(mInstance, nullptr);
+
         SDL_DestroyWindow(mWindowHandle);
         SDL_Quit();
-        vkDestroyDevice(mVkDevice, nullptr);
-        vkDestroyInstance(mVkInstance, nullptr);
     }
 
     void VulkanRenderer::OnWindowResized(uint32_t width, uint32_t height)
