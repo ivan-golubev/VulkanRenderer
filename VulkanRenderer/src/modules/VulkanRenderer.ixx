@@ -28,6 +28,9 @@ namespace gg
 		void CreateLogicalDevice();
 		void CreateSwapChain();
 		void CreateImageViews();
+		void CreateRenderPass();
+		void CreateGraphicsPipeline();
+		void CreateFrameBuffers();
 		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
 		void WaitForPreviousFrame();
 		void UploadGeometry();
@@ -73,20 +76,19 @@ namespace gg
 		SDL_Window* mWindowHandle;
 		bool mWindowResized{ true };
 
-		//D3D12_VIEWPORT mViewport;
-		//D3D12_RECT mScissorRect;
-
-		//ComPtr<ID3D12Device4> mDevice;
-		//ComPtr<ID3D12CommandQueue> mCommandQueue;
-		//ComPtr<ID3D12CommandAllocator> mCommandAllocator;
 		//ComPtr<ID3D12GraphicsCommandList> mCommandList;
 		//ComPtr<IDXGISwapChain3> mSwapChain;
 		//ComPtr<ID3D12PipelineState> mPipelineState;
 		//ComPtr<ID3D12RootSignature> mRootSignature;
+		VkRenderPass mRenderPass;
+		VkPipelineLayout mPipelineLayout;
+		VkPipeline mGraphicsPipeline;
+
 
 		/* Render Targets */
 		std::vector<VkImage> mSwapChainImages;
 		std::vector<VkImageView> mSwapChainImageViews;
+		std::vector<VkFramebuffer> mFramebuffers;
 		VkFormat mSwapChainImageFormat;
 		VkExtent2D mSwapChainExtent;
 
@@ -104,10 +106,6 @@ namespace gg
 		//ComPtr<ID3D12Resource> mIB_GPU_Resource;
 		//ComPtr<ID3D12Resource> mIB_CPU_Resource;
 		//D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
-
-		/* Shaders */
-		VkShaderModule mVertexShader;
-		VkShaderModule mFragmentShader;
 
 		/* TODO: move this to a "game_object" class */
 		uint32_t mIndexCount;
