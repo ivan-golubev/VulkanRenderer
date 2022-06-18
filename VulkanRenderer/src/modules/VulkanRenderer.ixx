@@ -35,7 +35,7 @@ namespace gg
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
-		void CreateCommandBuffer();
+		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
 		void Present(uint32_t imageIndex);
@@ -78,19 +78,18 @@ namespace gg
 		//	std::wstring const & resourceName
 		//);
 
-		static constexpr int8_t mFrameCount{ 2 };
+		static constexpr int8_t MAX_FRAMES_IN_FLIGHT{ 2 };
 		uint32_t mWidth;
 		uint32_t mHeight;
 		SDL_Window* mWindowHandle;
 		bool mWindowResized{ true };
 
 		VkCommandPool mCommandPool;
-		VkCommandBuffer mCommandBuffer;
+		std::vector<VkCommandBuffer> mCommandBuffers;
 		//ComPtr<ID3D12RootSignature> mRootSignature;
 		VkRenderPass mRenderPass;
 		VkPipelineLayout mPipelineLayout;
 		VkPipeline mGraphicsPipeline;
-
 
 		/* Render Targets */
 		std::vector<VkImage> mSwapChainImages;
@@ -98,6 +97,8 @@ namespace gg
 		std::vector<VkFramebuffer> mFrameBuffers;
 		VkFormat mSwapChainImageFormat;
 		VkExtent2D mSwapChainExtent;
+
+		uint32_t mCurrentFrame{ 0 };
 
 		///* Depth */
 		//ComPtr<ID3D12Resource> mDepthBuffer;
@@ -126,9 +127,9 @@ namespace gg
 		VkSurfaceKHR mSurface;
 		VkSwapchainKHR mSwapChain;
 		/* Synchronization objects */
-		VkSemaphore mImageAvailableSemaphore;
-		VkSemaphore mRenderFinishedSemaphore;
-		VkFence mInFlightFence;
+		std::vector<VkSemaphore> mImageAvailableSemaphores;
+		std::vector<VkSemaphore> mRenderFinishedSemaphores;
+		std::vector<VkFence> mInFlightFences;
 	};
 
 } // namespace gg

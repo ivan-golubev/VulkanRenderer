@@ -107,7 +107,7 @@ namespace gg {
         CreateGraphicsPipeline();
         CreateFrameBuffers();
         CreateCommandPool();
-        CreateCommandBuffer();
+        CreateCommandBuffers();
         CreateSyncObjects();
 
         /* Create render targets */
@@ -462,14 +462,15 @@ namespace gg {
         }
     }
 
-    void VulkanRenderer::CreateCommandBuffer()
+    void VulkanRenderer::CreateCommandBuffers()
     {
+        mCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.commandPool = mCommandPool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = 1;
-        if (VK_SUCCESS != vkAllocateCommandBuffers(mDevice, &allocInfo, &mCommandBuffer)) 
+        allocInfo.commandBufferCount = static_cast<uint32_t>(mCommandBuffers.size());
+        if (VK_SUCCESS != vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data())) 
         {
             throw std::runtime_error("failed to allocate command buffers!");
         }
@@ -477,17 +478,24 @@ namespace gg {
 
     void VulkanRenderer::CreateSyncObjects()
     {
+        mImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        mRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        mInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
         VkFenceCreateInfo fenceInfo{};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphore) != VK_SUCCESS
-            || vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphore) != VK_SUCCESS
-            || vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFence) != VK_SUCCESS) 
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) 
         {
-            throw std::runtime_error("failed to create semaphores!");
+            if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS
+                || vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS
+                || vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to create semaphores!");
+            }
         }
     }
 
@@ -790,9 +798,12 @@ namespace gg {
         WaitForPreviousFrame(); // TODO: needed ?
         vkDeviceWaitIdle(mDevice);
 
-        vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
-        vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
-        vkDestroyFence(mDevice, mInFlightFence, nullptr);
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) 
+        {
+            vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
+            vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
+            vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
+        }
         vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
 
         for (auto framebuffer : mFrameBuffers) 
@@ -845,15 +856,16 @@ namespace gg {
         mvpMatrix = XMMatrixMultiply(mvpMatrix, mProjectionMatrix); 
 
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
         /* Record all the commands we need to render the scene into the command list. */
-        RecordCommandBuffer(mCommandBuffer, imageIndex, mvpMatrix);
+        RecordCommandBuffer(mCommandBuffers[mCurrentFrame], imageIndex, mvpMatrix);
         /* Execute the commands */
         SubmitCommands();
         /* Present the frame and inefficiently wait for the frame to render. */
         Present(imageIndex);
         WaitForPreviousFrame();
+        mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     void VulkanRenderer::Present(uint32_t imageIndex)
@@ -861,7 +873,7 @@ namespace gg {
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphore };
+        VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mCurrentFrame]};
         presentInfo.pWaitSemaphores = signalSemaphores;
         VkSwapchainKHR swapChains[] = { mSwapChain };
         presentInfo.swapchainCount = 1;
@@ -874,17 +886,17 @@ namespace gg {
     {
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        VkSemaphore waitSemaphores[] { mImageAvailableSemaphore };
+        VkSemaphore waitSemaphores[] { mImageAvailableSemaphores[mCurrentFrame] };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &mCommandBuffer;
-        VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphore };
+        submitInfo.pCommandBuffers = &mCommandBuffers[mCurrentFrame];
+        VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mCurrentFrame] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
-        if (VK_SUCCESS != vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFence)) 
+        if (VK_SUCCESS != vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]))
         {
             throw std::runtime_error("failed to submit a command buffer!");
         }
@@ -892,8 +904,8 @@ namespace gg {
 
     void VulkanRenderer::WaitForPreviousFrame()
     {
-        vkWaitForFences(mDevice, 1, &mInFlightFence, VK_TRUE, UINT64_MAX);
-        vkResetFences(mDevice, 1, &mInFlightFence);
+        vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
+        vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
     }
 
     void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix)
