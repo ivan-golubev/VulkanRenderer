@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <DirectXMath.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -13,6 +14,8 @@ import Camera;
 import Input;
 import Vertex;
 import TimeManager;
+
+using DirectX::XMMATRIX;
 
 namespace gg 
 {
@@ -31,7 +34,12 @@ namespace gg
 		void CreateRenderPass();
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
-		//void PopulateCommandList(XMMATRIX const & mvpMatrix);
+		void CreateCommandPool();
+		void CreateCommandBuffer();
+		void CreateSyncObjects();
+		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
+		void Present(uint32_t imageIndex);
+		void SubmitCommands();
 		void WaitForPreviousFrame();
 		void UploadGeometry();
 		void ResizeRenderTargets();
@@ -76,9 +84,8 @@ namespace gg
 		SDL_Window* mWindowHandle;
 		bool mWindowResized{ true };
 
-		//ComPtr<ID3D12GraphicsCommandList> mCommandList;
-		//ComPtr<IDXGISwapChain3> mSwapChain;
-		//ComPtr<ID3D12PipelineState> mPipelineState;
+		VkCommandPool mCommandPool;
+		VkCommandBuffer mCommandBuffer;
 		//ComPtr<ID3D12RootSignature> mRootSignature;
 		VkRenderPass mRenderPass;
 		VkPipelineLayout mPipelineLayout;
@@ -88,7 +95,7 @@ namespace gg
 		/* Render Targets */
 		std::vector<VkImage> mSwapChainImages;
 		std::vector<VkImageView> mSwapChainImageViews;
-		std::vector<VkFramebuffer> mFramebuffers;
+		std::vector<VkFramebuffer> mFrameBuffers;
 		VkFormat mSwapChainImageFormat;
 		VkExtent2D mSwapChainExtent;
 
@@ -119,10 +126,9 @@ namespace gg
 		VkSurfaceKHR mSurface;
 		VkSwapchainKHR mSwapChain;
 		/* Synchronization objects */
-		//ComPtr<ID3D12Fence> mFence;
-		//uint32_t mFrameIndex{0};
-		//uint64_t mFenceValue{0};
-		//HANDLE mFenceEvent{nullptr};
+		VkSemaphore mImageAvailableSemaphore;
+		VkSemaphore mRenderFinishedSemaphore;
+		VkFence mInFlightFence;
 	};
 
 } // namespace gg
