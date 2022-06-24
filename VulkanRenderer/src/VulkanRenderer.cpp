@@ -393,7 +393,7 @@ namespace gg {
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
 
         VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -760,7 +760,7 @@ namespace gg {
         memcpy(mappedData, indices.data(), static_cast<size_t>(IB_sizeBytes));
         vkUnmapMemory(mDevice, stagingBufferMemory);
 
-        VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
         CreateBuffer(mIB, mIndexBufferMemory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         CopyBuffer(stagingBuffer, mIB, IB_sizeBytes);
 
@@ -1011,7 +1011,7 @@ namespace gg {
     {
         /* Ensure that the GPU is no longer referencing resources that are about to be
          cleaned up by the destructor. */
-        WaitForPreviousFrame(); // TODO: needed ?
+        WaitForPreviousFrame();
         vkDeviceWaitIdle(mDevice);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) 

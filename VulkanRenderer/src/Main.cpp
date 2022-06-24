@@ -29,8 +29,8 @@ void MainLoop()
                     // Do nothing.
                     break;
             }
-            Application::Get().Tick();
         }
+        Application::Get().Tick();
     }
 }
 
