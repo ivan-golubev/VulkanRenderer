@@ -3,6 +3,9 @@
 #include <format>
 #include <cstdlib>
 
+#include <chrono>
+#include <thread>
+
 import Application;
 import ErrorHandling;
 import Logging;
@@ -11,6 +14,7 @@ using namespace gg;
 
 void MainLoop()
 {
+    using namespace std::chrono_literals;
     bool isRunning{ true };
 
     while (isRunning)
@@ -23,6 +27,10 @@ void MainLoop()
             {
                 case SDL_QUIT:
                     isRunning = false;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED && Application::IsInitialized())
+                        Application::Get().OnWindowResized(event.window.data1, event.window.data2);
                     break;
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
@@ -40,6 +48,8 @@ void MainLoop()
             }
         }
         Application::Get().Tick();
+        // TODO: without this wait the camera won't move, need to investigate
+        std::this_thread::sleep_for(1ms);
     }
 }
 
@@ -53,7 +63,7 @@ int main()
     uint32_t const width{ 1920 };
     uint32_t const height{ 1080 };
 
-    SDL_Window* window = SDL_CreateWindow("Vulkan Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN);
+    SDL_Window* window = SDL_CreateWindow("Vulkan Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if(nullptr == window) 
     {
         DebugLog(DebugLevel::Error, L"Could not create SDL window");

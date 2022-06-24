@@ -48,7 +48,9 @@ namespace gg
 		void SubmitCommands();
 		void WaitForPreviousFrame();
 		void UploadGeometry();
-		void ResizeRenderTargets();
+
+		void CleanupSwapChain();
+		void RecreateSwapChain();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
 

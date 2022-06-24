@@ -119,8 +119,6 @@ namespace gg {
         CreateCommandBuffers();
         CreateSyncObjects();
 
-        /* Create render targets */
-        ResizeRenderTargets();
         /* Create depth buffer */
         ResizeDepthBuffer();
     }
@@ -834,25 +832,34 @@ namespace gg {
     void VulkanRenderer::ResizeWindow()
     {
         //mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f,static_cast<float>(mWidth), static_cast<float>(mHeight), 0.0f, 1.0f);
-        ResizeRenderTargets();
+        RecreateSwapChain();
         ResizeDepthBuffer();
         mWindowResized = false;
     }
 
-    void VulkanRenderer::ResizeRenderTargets()
+    void VulkanRenderer::CleanupSwapChain()
     {
-        /*for (uint32_t i{ 0 }; i < mFrameCount; ++i)
-            mRenderTargets[i].Reset();
+        for (auto framebuffer : mFrameBuffers)
+            vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
+        for (auto imageView : mSwapChainImageViews)
+            vkDestroyImageView(mDevice, imageView, nullptr);
 
-        ThrowIfFailed(mSwapChain->ResizeBuffers(mFrameCount, mWidth, mHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+        vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+        vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+        vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
+    }
 
-        for (uint8_t n = 0; n < mFrameCount; n++)
-        {
-            ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
-            mRtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(mRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, mRtvDescriptorSize);
-            mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, mRtvHandles[n]);
-            SetName(mRenderTargets[n].Get(), std::format(L"SwapChainBuffer[{}]", n));
-        }*/
+    void VulkanRenderer::RecreateSwapChain()
+    {
+        vkDeviceWaitIdle(mDevice);
+        CleanupSwapChain();
+
+        CreateSwapChain();
+        CreateImageViews();
+        CreateRenderPass();
+        CreateGraphicsPipeline();
+        CreateFrameBuffers();
     }
 
     void VulkanRenderer::ResizeDepthBuffer()
@@ -1014,6 +1021,8 @@ namespace gg {
         WaitForPreviousFrame();
         vkDeviceWaitIdle(mDevice);
 
+        CleanupSwapChain();
+
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) 
         {
             vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
@@ -1021,11 +1030,6 @@ namespace gg {
             vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
         }
         vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
-        /* clear the swapchain */
-        for (auto framebuffer : mFrameBuffers) 
-            vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
-        for (auto imageView : mSwapChainImageViews)
-            vkDestroyImageView(mDevice, imageView, nullptr);
 
         for (size_t i{ 0 }; i < MAX_FRAMES_IN_FLIGHT; ++i)
         {
@@ -1040,10 +1044,6 @@ namespace gg {
         vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
         vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
 
-        vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
-        vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-        vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
         vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
         vkDestroyDevice(mDevice, nullptr);
         vkDestroyInstance(mInstance, nullptr);
