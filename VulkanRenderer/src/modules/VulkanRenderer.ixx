@@ -37,6 +37,8 @@ namespace gg
 		void CreateCommandPool();
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
+		void CreateVertexBuffer();
+		void CreateIndexBuffer();
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
 		void Present(uint32_t imageIndex);
 		void SubmitCommands();
@@ -74,10 +76,11 @@ namespace gg
 			VkBuffer& outBuffer,
 			VkDeviceMemory& outMemory,
 			uint64_t sizeBytes,
-			VkBufferUsageFlagBits usage
+			VkBufferUsageFlagBits usage,
+			VkMemoryPropertyFlags properties
 		);
 
-		void UploadBufferData(VkDeviceMemory&, void const* data, uint64_t sizeBytes);
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		//void CreateBuffer(
 		//	ComPtr<ID3D12GraphicsCommandList> const & commandList, 
