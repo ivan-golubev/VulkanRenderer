@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <SDL2/SDL_keycode.h>
 export module Input;
 
 export namespace gg
@@ -20,7 +21,7 @@ export namespace gg
 
 	class InputManager {
 	public:
-		void OnWindowMessage(uint32_t uMsg, uint32_t wParam);
+		void OnKeyPressed(SDL_Keycode, bool isDown);
 		void SetKeyDown(InputAction a, bool value);
 		void ClearKeys();
 		bool IsKeyDown(InputAction a) const;

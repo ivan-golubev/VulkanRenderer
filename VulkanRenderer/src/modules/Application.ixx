@@ -3,6 +3,7 @@ module;
 #include <memory>
 #include <windows.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_keycode.h>
 export module Application;
 
 import VulkanRenderer;
@@ -21,7 +22,7 @@ namespace gg
 
 		void Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
-		void OnWindowMessage(uint32_t uMsg, uint32_t wParam);
+		void OnKeyPressed(SDL_Keycode, bool isDown);
 
 		TimeManager& GetTimeManager() const;
 		InputManager& GetInputManager() const;

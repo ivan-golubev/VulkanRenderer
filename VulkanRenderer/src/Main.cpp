@@ -24,7 +24,16 @@ void MainLoop()
                 case SDL_QUIT:
                     isRunning = false;
                     break;
-
+                case SDL_KEYDOWN:
+                case SDL_KEYUP:
+                {
+                    SDL_Keycode key{ event.key.keysym.sym };
+                    if (key == SDLK_ESCAPE)
+                        isRunning = false;
+                    else if (Application::IsInitialized())
+                        Application::Get().OnKeyPressed(key, event.type == SDL_KEYDOWN);
+                    break;
+                }
                 default:
                     // Do nothing.
                     break;

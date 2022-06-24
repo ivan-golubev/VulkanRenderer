@@ -1,32 +1,32 @@
 module;
 #include <cstdint>
-#include <windows.h>
+#include <SDL2/SDL_keycode.h>
+#include <cstring> // memset
 module Input;
 
 namespace gg
 {
-	void InputManager::OnWindowMessage(uint32_t uMsg, uint32_t wParam) 
+	void InputManager::OnKeyPressed(SDL_Keycode key, bool isDown)
 	{
-		bool isDown{ (uMsg == WM_KEYDOWN) };
-		if (wParam == 'W')
+		if (key == SDLK_w)
 			Keys[MoveCameraForward] = isDown;
-		else if (wParam == 'S')
+		else if (key == SDLK_s)
 			Keys[MoveCameraBack] = isDown;
-		else if (wParam == 'A')
+		else if (key == SDLK_a)
 			Keys[MoveCameraLeft] = isDown;
-		else if (wParam == 'D')
+		else if (key == SDLK_d)
 			Keys[MoveCameraRight] = isDown;
-		else if (wParam == 'Q')
+		else if (key == SDLK_q)
 			Keys[RaiseCamera] = isDown;
-		else if (wParam == 'E')
+		else if (key == SDLK_e)
 			Keys[LowerCamera] = isDown;
-		else if (wParam == VK_UP)
+		else if (key == SDLK_UP)
 			Keys[LookCameraUp] = isDown;
-		else if (wParam == VK_DOWN)
+		else if (key == SDLK_DOWN)
 			Keys[LookCameraDown] = isDown;
-		else if (wParam == VK_LEFT)
+		else if (key == SDLK_LEFT)
 			Keys[TurnCameraLeft] = isDown;
-		else if (wParam == VK_RIGHT)
+		else if (key == SDLK_RIGHT)
 			Keys[TurnCameraRight] = isDown;
 	}
 
@@ -37,7 +37,7 @@ namespace gg
 
 	void InputManager::ClearKeys() 
 	{
-		ZeroMemory(Keys, sizeof(Keys));
+		memset(Keys, 0, sizeof(Keys));
 	}
 
 	bool InputManager::IsKeyDown(InputAction a) const 

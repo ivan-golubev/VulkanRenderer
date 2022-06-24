@@ -3,6 +3,7 @@ module;
 #include <DirectXMath.h>
 #include <memory>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_keycode.h>
 module Application;
 
 import VulkanRenderer;
@@ -75,9 +76,9 @@ namespace gg
 		mRenderer->OnWindowResized(width, height);
 	}
 
-	void Application::OnWindowMessage(uint32_t uMsg, uint32_t wParam)
+	void Application::OnKeyPressed(SDL_Keycode key, bool isDown)
 	{
-		mInputManager->OnWindowMessage(uMsg, wParam);
+		mInputManager->OnKeyPressed(key, isDown);
 	}
 
 } // namespace gg 
