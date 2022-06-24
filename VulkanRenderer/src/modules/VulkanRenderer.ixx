@@ -61,6 +61,7 @@ namespace gg
 		};
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
+		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
 		bool IsDeviceSuitable(VkPhysicalDevice const) const;
 
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice const) const;
@@ -69,6 +70,15 @@ namespace gg
 		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
 
 		VkShaderModule createShaderModule(std::vector<char> const& shaderBlob);
+		void CreateBuffer(
+			VkBuffer& outBuffer,
+			VkDeviceMemory& outMemory,
+			uint64_t sizeBytes,
+			VkBufferUsageFlagBits usage
+		);
+
+		void UploadBufferData(VkDeviceMemory&, void const* data, uint64_t sizeBytes);
+
 		//void CreateBuffer(
 		//	ComPtr<ID3D12GraphicsCommandList> const & commandList, 
 		//	ComPtr<ID3D12Resource> & gpuResource, 
@@ -106,7 +116,11 @@ namespace gg
 		//CD3DX12_CPU_DESCRIPTOR_HANDLE mDsvHandle;
 		//uint32_t mDsvDescriptorSize;
 
-		///* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
+		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
+		VkBuffer mVB;
+		VkBuffer mIB;
+		VkDeviceMemory mVertexBufferMemory;
+		VkDeviceMemory mIndexBufferMemory;
 		//ComPtr<ID3D12Resource> mVB_GPU_Resource;
 		//ComPtr<ID3D12Resource> mVB_CPU_Resource;
 		//D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;

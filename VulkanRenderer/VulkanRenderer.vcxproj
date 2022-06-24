@@ -166,6 +166,7 @@
     <ClCompile Include="src\modules\Vertex.ixx" />
     <ClCompile Include="src\modules\VulkanRenderer.ixx" />
     <ClCompile Include="src\TimeManager.cpp" />
+    <ClCompile Include="src\Vertex.cpp" />
     <ClCompile Include="src\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>

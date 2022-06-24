@@ -1,5 +1,7 @@
 module;
 #include <DirectXMath.h>
+#include <array>
+#include <vulkan/vulkan.h>
 export module Vertex;
 
 using DirectX::XMVECTOR;
@@ -16,6 +18,9 @@ namespace gg
 			: Position{x, y, z, w}
 			, Color{r, g, b, a}
 		{}
+
+		static VkVertexInputBindingDescription GetBindingDescription();
+		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions();
 	};
 
 } // namespace gg

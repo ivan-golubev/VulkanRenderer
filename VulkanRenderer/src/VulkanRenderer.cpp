@@ -1,5 +1,6 @@
 module;
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <DirectXMath.h>
 #include <format>
@@ -107,6 +108,9 @@ namespace gg {
         CreateGraphicsPipeline();
         CreateFrameBuffers();
         CreateCommandPool();
+
+        UploadGeometry();
+
         CreateCommandBuffers();
         CreateSyncObjects();
 
@@ -114,8 +118,6 @@ namespace gg {
         ResizeRenderTargets();
         /* Create depth buffer */
         ResizeDepthBuffer();
-
-        UploadGeometry();
     }
 
     void VulkanRenderer::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
@@ -277,6 +279,7 @@ namespace gg {
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //dependency.dstStageMask = ?; // TODO: fix the validation error
         dependency.srcAccessMask = 0;
 
         VkSubpassDescription subpass{};
@@ -326,9 +329,15 @@ namespace gg {
 
         VkPipelineShaderStageCreateInfo const shaderStages[] { vertShaderStageInfo, fragShaderStageInfo };
 
+        auto bindingDescription = Vertex::GetBindingDescription();
+        auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        // TODO: fill
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -528,6 +537,20 @@ namespace gg {
         return indices;
     }
 
+    uint32_t VulkanRenderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+    {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i) 
+        {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+            {
+                return i;
+            }
+        }
+        throw std::runtime_error("failed to find suitable memory type!");
+    }
+
     static std::vector<char const *> const deviceExtensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -653,7 +676,7 @@ namespace gg {
     {
         /* Initialize the vertices. TODO: move to a separate class */
         // TODO: in fact, cubes are not fun, read data from an .fbx
-        std::vector<Vertex> const mVertices{
+        std::vector<Vertex> const vertices{
             /*  x      y      z     w     r      g    b     a */
             {-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // 0
             {-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f}, // 1
@@ -664,7 +687,7 @@ namespace gg {
             { 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, // 6
             { 1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}, // 7
         };
-        std::vector<uint32_t> const mIndices{
+        std::vector<uint32_t> const indices{
             0, 1, 2, 0, 2, 3,
             4, 6, 5, 4, 7, 6,
             4, 5, 1, 4, 1, 0,
@@ -672,15 +695,21 @@ namespace gg {
             1, 5, 6, 1, 6, 2,
             4, 0, 3, 4, 3, 7
         };
-        mIndexCount = static_cast<uint32_t>(mIndices.size());
+        mIndexCount = static_cast<uint32_t>(indices.size());
 
-        uint32_t const VB_sizeBytes = static_cast<uint32_t>(mVertices.size() * sizeof(Vertex));
-        uint32_t const IB_sizeBytes = static_cast<uint32_t>(mIndices.size() * sizeof(uint32_t));
+        uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
+        uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
 
         /*CreateBuffer(mCommandList, mVB_GPU_Resource, mVB_CPU_Resource, mVertices.data(), VB_sizeBytes, L"VertexBuffer");
         CreateBuffer(mCommandList, mIB_GPU_Resource, mIB_CPU_Resource, mIndices.data(), IB_sizeBytes, L"IndexBuffer");*/
 
-        WaitForPreviousFrame();
+        CreateBuffer(mVB, mVertexBufferMemory, VB_sizeBytes, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        CreateBuffer(mIB, mIndexBufferMemory, IB_sizeBytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+        UploadBufferData(mVertexBufferMemory, vertices.data(), VB_sizeBytes);
+        UploadBufferData(mIndexBufferMemory, indices.data(), IB_sizeBytes);
+
+        //WaitForPreviousFrame();
     }
 
     void VulkanRenderer::ResizeWindow()
@@ -740,6 +769,47 @@ namespace gg {
         //dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
         //mDsvHandle = { mDepthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
         //mDevice->CreateDepthStencilView(mDepthBuffer.Get(), &dsvDesc, mDsvHandle);
+    }
+
+    void VulkanRenderer::CreateBuffer(
+        VkBuffer& outBuffer,
+        VkDeviceMemory& outBufferMemory,
+        uint64_t sizeBytes,
+        VkBufferUsageFlagBits usage
+    )
+    {
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = sizeBytes;
+        bufferInfo.usage = usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        if (VK_SUCCESS != vkCreateBuffer(mDevice, &bufferInfo, nullptr, &outBuffer)) 
+        {
+            throw std::runtime_error("failed to create vertex buffer!");
+        }
+
+        /* allocate and bind memory to this buffer */
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(mDevice, outBuffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        if (VK_SUCCESS != vkAllocateMemory(mDevice, &allocInfo, nullptr, &outBufferMemory))
+        {
+            throw std::runtime_error("failed to allocate vertex buffer memory!");
+        }
+        vkBindBufferMemory(mDevice, outBuffer, outBufferMemory, 0);
+    }
+
+    void VulkanRenderer::UploadBufferData(VkDeviceMemory& outMemory, void const* data, uint64_t sizeBytes)
+    {
+        void* mappedData;
+        vkMapMemory(mDevice, outMemory, 0, sizeBytes, 0, &mappedData);
+        memcpy(mappedData, data, static_cast<size_t>(sizeBytes));
+        vkUnmapMemory(mDevice, outMemory);
     }
 
     //void VulkanRenderer::CreateBuffer(
@@ -816,6 +886,11 @@ namespace gg {
             vkDestroyImageView(mDevice, imageView, nullptr);
         }
 
+        vkDestroyBuffer(mDevice, mVB, nullptr);
+        vkDestroyBuffer(mDevice, mIB, nullptr);
+        vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
+        vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
+
         vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
         vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
@@ -837,6 +912,8 @@ namespace gg {
 
     void VulkanRenderer::Render(uint64_t deltaTimeMs)
     {
+        WaitForPreviousFrame();
+
         if (mWindowResized)
         {
             ResizeWindow();
@@ -864,7 +941,6 @@ namespace gg {
         SubmitCommands();
         /* Present the frame and inefficiently wait for the frame to render. */
         Present(imageIndex);
-        WaitForPreviousFrame();
         mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -904,6 +980,7 @@ namespace gg {
 
     void VulkanRenderer::WaitForPreviousFrame()
     {
+        assert(mInFlightFences.size() > 0);
         vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
         vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
     }
@@ -932,7 +1009,14 @@ namespace gg {
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0); // TODO: draw indexed instead
+
+        VkBuffer vertexBuffers[] { mVB };
+        VkDeviceSize offsets[] { 0 };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffer, mIB, 0, VK_INDEX_TYPE_UINT32);
+
+        //vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, mIndexCount, 1, 0 ,0 ,0);
 
         vkCmdEndRenderPass(commandBuffer);
         if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer)) {
