@@ -5,7 +5,6 @@ module;
 #include <optional>
 #include <string>
 #include <vector>
-#include <windows.h>
 #include <SDL2/SDL_video.h>
 #include <vulkan/vulkan.h>
 export module VulkanRenderer;
@@ -51,7 +50,6 @@ namespace gg
 
 		void CleanupSwapChain();
 		void RecreateSwapChain();
-		void ResizeDepthBuffer();
 		void ResizeWindow();
 
 		struct QueueFamilyIndices
@@ -88,15 +86,6 @@ namespace gg
 
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-		//void CreateBuffer(
-		//	ComPtr<ID3D12GraphicsCommandList> const & commandList, 
-		//	ComPtr<ID3D12Resource> & gpuResource, 
-		//	ComPtr<ID3D12Resource> & cpuResource, 
-		//	void const * data, 
-		//	uint64_t sizeBytes,
-		//	std::wstring const & resourceName
-		//);
-
 		static constexpr int8_t MAX_FRAMES_IN_FLIGHT{ 2 };
 		uint32_t mWidth;
 		uint32_t mHeight;
@@ -105,7 +94,6 @@ namespace gg
 
 		VkCommandPool mCommandPool;
 		std::vector<VkCommandBuffer> mCommandBuffers;
-		//ComPtr<ID3D12RootSignature> mRootSignature;
 		VkRenderPass mRenderPass;
 		VkDescriptorSetLayout mDescriptorSetLayout;
 		VkPipelineLayout mPipelineLayout;
@@ -119,12 +107,6 @@ namespace gg
 		VkExtent2D mSwapChainExtent;
 
 		uint32_t mCurrentFrame{ 0 };
-
-		///* Depth */
-		//ComPtr<ID3D12Resource> mDepthBuffer;
-		//ComPtr<ID3D12DescriptorHeap> mDepthStencilHeap;
-		//CD3DX12_CPU_DESCRIPTOR_HANDLE mDsvHandle;
-		//uint32_t mDsvDescriptorSize;
 
 		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
 		VkBuffer mVB;

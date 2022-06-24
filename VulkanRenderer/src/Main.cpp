@@ -60,10 +60,12 @@ int main()
         DebugLog(DebugLevel::Error, L"Could not initialize SDL");
         return EXIT_FAILURE;
     }
+    atexit(SDL_Quit);
+
     uint32_t const width{ 1920 };
     uint32_t const height{ 1080 };
 
-    SDL_Window* window = SDL_CreateWindow("Vulkan Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("Vulkan Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if(nullptr == window) 
     {
         DebugLog(DebugLevel::Error, L"Could not create SDL window");

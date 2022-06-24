@@ -15,9 +15,8 @@ module;
 #include <SDL2/SDL_vulkan.h>
 #include <vector>
 #include <vulkan/vulkan.h>
-#include <windows.h>
-#include <wrl.h>
 
+#include <windows.h>
 #include <pix3.h> // has to be the last - depends on types in windows.h
 
 module VulkanRenderer;
@@ -30,7 +29,6 @@ import Input;
 import Vertex;
 
 using namespace DirectX;
-using Microsoft::WRL::ComPtr;
 
 namespace gg {
 
@@ -70,11 +68,8 @@ namespace gg {
         , mHeight{ height }
         , mWindowHandle{ windowHandle }
         , mPhysicalDevice{ VK_NULL_HANDLE }
-        //, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
-        //, mViewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
         , mCamera{ std::make_unique<Camera>() }
     {
-
         uint32_t extension_count;
         if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr)) 
         {
@@ -118,9 +113,6 @@ namespace gg {
         UploadGeometry();
         CreateCommandBuffers();
         CreateSyncObjects();
-
-        /* Create depth buffer */
-        ResizeDepthBuffer();
     }
 
     void VulkanRenderer::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
@@ -282,7 +274,7 @@ namespace gg {
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        //dependency.dstStageMask = ?; // TODO: fix the validation error
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.srcAccessMask = 0;
 
         VkSubpassDescription subpass{};
@@ -415,17 +407,7 @@ namespace gg {
         colorBlending.logicOp = VK_LOGIC_OP_COPY;
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
-#if 0
-        std::vector<VkDynamicState> dynamicStates
-        {
-            VK_DYNAMIC_STATE_VIEWPORT
-        };
 
-        VkPipelineDynamicStateCreateInfo dynamicState{};
-        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-        dynamicState.pDynamicStates = dynamicStates.data();
-#endif
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
@@ -699,7 +681,6 @@ namespace gg {
     {
         CreateVertexBuffer();
         CreateIndexBuffer();
-        //WaitForPreviousFrame();
     }
 
     void VulkanRenderer::CreateVertexBuffer() 
@@ -831,9 +812,7 @@ namespace gg {
 
     void VulkanRenderer::ResizeWindow()
     {
-        //mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f,static_cast<float>(mWidth), static_cast<float>(mHeight), 0.0f, 1.0f);
         RecreateSwapChain();
-        ResizeDepthBuffer();
         mWindowResized = false;
     }
 
@@ -860,41 +839,6 @@ namespace gg {
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFrameBuffers();
-    }
-
-    void VulkanRenderer::ResizeDepthBuffer()
-    {
-        //mDepthBuffer.Reset();
-
-        //D3D12_CLEAR_VALUE optimizedClearValue{};
-        //optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        //optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-        //uint32_t const width{ std::max(mWidth, 0U) };
-        //uint32_t const height{ std::max(mHeight, 0U) };
-
-        //CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-        //D3D12_RESOURCE_DESC const resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-        //    DXGI_FORMAT_D32_FLOAT, width, height,
-        //    1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-        //);
-        //ThrowIfFailed(mDevice->CreateCommittedResource(
-        //    &defaultHeapProps,
-        //    D3D12_HEAP_FLAG_NONE,
-        //    &resourceDesc,
-        //    D3D12_RESOURCE_STATE_DEPTH_WRITE,
-        //    &optimizedClearValue,
-        //    IID_PPV_ARGS(&mDepthBuffer)
-        //));
-        //SetName(mDepthBuffer.Get(), std::format(L"{}_GPU", L"DepthStencilTexture"));
-
-        ///* create the DSV */
-        //D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-        //dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-        //dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        //dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-        //mDsvHandle = { mDepthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
-        //mDevice->CreateDepthStencilView(mDepthBuffer.Get(), &dsvDesc, mDsvHandle);
     }
 
     void VulkanRenderer::CreateBuffer(
@@ -964,55 +908,6 @@ namespace gg {
         /* This cmd buffer is no longer needed */
         vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);
     }
-
-    //void VulkanRenderer::CreateBuffer(
-    //    ComPtr<ID3D12GraphicsCommandList> const & commandList,
-    //    ComPtr<ID3D12Resource> & gpuResource,
-    //    ComPtr<ID3D12Resource> & cpuResource,
-    //    void const * data,
-    //    uint64_t sizeBytes,
-    //    std::wstring const & resourceName
-    //)
-    //{
-    //    /* create an intermediate resource */
-    //    CD3DX12_HEAP_PROPERTIES uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
-    //    CD3DX12_RESOURCE_DESC uploadResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes) };
-    //    ThrowIfFailed(mDevice->CreateCommittedResource(
-    //        &uploadHeapProps,
-    //        D3D12_HEAP_FLAG_NONE,
-    //        &uploadResourceProps,
-    //        D3D12_RESOURCE_STATE_GENERIC_READ,
-    //        nullptr,
-    //        IID_PPV_ARGS(&cpuResource))
-    //    );
-    //    SetName(cpuResource.Get(), std::format(L"{}_CPU", resourceName));
-
-    //    /* create the target resource on the GPU */
-    //    CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-    //    CD3DX12_RESOURCE_DESC const gpuResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes, D3D12_RESOURCE_FLAG_NONE) };
-    //    ThrowIfFailed(mDevice->CreateCommittedResource(
-    //        &defaultHeapProps,
-    //        D3D12_HEAP_FLAG_NONE,
-    //        &gpuResourceProps,
-    //        D3D12_RESOURCE_STATE_COPY_DEST,
-    //        nullptr,
-    //        IID_PPV_ARGS(&gpuResource))
-    //    );
-    //    SetName(gpuResource.Get(), std::format(L"{}_GPU", resourceName));
-
-    //    /* transfer the data */
-    //    D3D12_SUBRESOURCE_DATA subresourceData = {};
-    //    subresourceData.pData = data;
-    //    subresourceData.RowPitch = subresourceData.SlicePitch = sizeBytes;
-
-    //    UpdateSubresources(
-    //        commandList.Get(),
-    //        gpuResource.Get(),
-    //        cpuResource.Get(),
-    //        0, 0, 1,
-    //        &subresourceData
-    //    );
-    //}
 
     VulkanRenderer::~VulkanRenderer()
     {
@@ -1180,52 +1075,6 @@ namespace gg {
         if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer)) {
             throw std::runtime_error("failed to record command buffer!");
         }
-
-    //    //ThrowIfFailed(mCommandAllocator->Reset());
-    //    ThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPipelineState.Get()));
-    //    
-    //    uint8_t const frameIndex{ static_cast<uint8_t>(mSwapChain->GetCurrentBackBufferIndex()) };
-    //    /* Set all the state first */
-    //    {            
-    //        mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //        mCommandList->IASetVertexBuffers(0, 1, &mVertexBufferView);
-    //        mCommandList->IASetIndexBuffer(&mIndexBufferView);
-
-    //        mCommandList->RSSetViewports(1, &mViewport);
-    //        mCommandList->RSSetScissorRects(1, &mScissorRect);
-
-    //        mCommandList->SetPipelineState(mPipelineState.Get());
-    //        mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-    //        mCommandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
-
-    //        mCommandList->OMSetRenderTargets(1, &mRtvHandles[frameIndex], true, &mDsvHandle);
-    //    }
-
-    //    {
-    //        PIXScopedEvent(mCommandList.Get(), PIX_COLOR(0,0,255), L"RenderFrame");
-
-    //        /* Back buffer to be used as a Render Target */
-    //        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-    //            mRenderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
-    //        );
-    //        mCommandList->ResourceBarrier(1, &barrier);
-
-    //        PIXSetMarker(mCommandList.Get(), PIX_COLOR_DEFAULT, L"SampleMarker");
-
-    //        {  /* Record commands */
-    //            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ mRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, mRtvDescriptorSize };
-    //            float const clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    //            mCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-    //            mCommandList->ClearDepthStencilView(mDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-    //            mCommandList->DrawIndexedInstanced(mIndexCount, 1, 0, 0, 0);
-    //        }
-    //        /* Indicate that the back buffer will now be used to present. */
-    //        barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-    //            mRenderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
-    //        );
-    //        mCommandList->ResourceBarrier(1, &barrier);
-    //    }
-    //    ThrowIfFailed(mCommandList->Close());
     }
 
 } // namespace gg
