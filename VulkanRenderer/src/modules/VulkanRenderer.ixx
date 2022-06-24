@@ -32,6 +32,7 @@ namespace gg
 		void CreateSwapChain();
 		void CreateImageViews();
 		void CreateRenderPass();
+		void CreateDescriptorSetLayout();
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
@@ -39,6 +40,9 @@ namespace gg
 		void CreateSyncObjects();
 		void CreateVertexBuffer();
 		void CreateIndexBuffer();
+		void CreateUniformBuffers();
+		void CreateDescriptorPool();
+		void CreateDescriptorSets();
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
 		void Present(uint32_t imageIndex);
 		void SubmitCommands();
@@ -101,6 +105,7 @@ namespace gg
 		std::vector<VkCommandBuffer> mCommandBuffers;
 		//ComPtr<ID3D12RootSignature> mRootSignature;
 		VkRenderPass mRenderPass;
+		VkDescriptorSetLayout mDescriptorSetLayout;
 		VkPipelineLayout mPipelineLayout;
 		VkPipeline mGraphicsPipeline;
 
@@ -124,13 +129,11 @@ namespace gg
 		VkBuffer mIB;
 		VkDeviceMemory mVertexBufferMemory;
 		VkDeviceMemory mIndexBufferMemory;
-		//ComPtr<ID3D12Resource> mVB_GPU_Resource;
-		//ComPtr<ID3D12Resource> mVB_CPU_Resource;
-		//D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
 
-		//ComPtr<ID3D12Resource> mIB_GPU_Resource;
-		//ComPtr<ID3D12Resource> mIB_CPU_Resource;
-		//D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+		std::vector<VkBuffer> mUniformBuffers;
+		std::vector<VkDeviceMemory> mUniformBuffersMemory;
+		VkDescriptorPool mDescriptorPool;
+		std::vector<VkDescriptorSet> mDescriptorSets;
 
 		/* TODO: move this to a "game_object" class */
 		uint32_t mIndexCount;
