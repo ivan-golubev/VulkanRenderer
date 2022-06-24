@@ -913,7 +913,6 @@ namespace gg {
     {
         /* Ensure that the GPU is no longer referencing resources that are about to be
          cleaned up by the destructor. */
-        WaitForPreviousFrame();
         vkDeviceWaitIdle(mDevice);
 
         CleanupSwapChain();
@@ -956,7 +955,7 @@ namespace gg {
 
     void VulkanRenderer::Render(uint64_t deltaTimeMs)
     {
-        WaitForPreviousFrame();
+        vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
         if (mWindowResized)
         {
@@ -984,7 +983,19 @@ namespace gg {
         /***********************/
 
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) 
+        {
+            RecreateSwapChain();
+            return;
+        }
+        else if (result != VK_SUCCESS) 
+        {
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
+
+        vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
         /* Record all the commands we need to render the scene into the command list. */
         RecordCommandBuffer(mCommandBuffers[mCurrentFrame], imageIndex, mvpMatrix);
@@ -1027,13 +1038,6 @@ namespace gg {
         {
             throw std::runtime_error("failed to submit a command buffer!");
         }
-    }
-
-    void VulkanRenderer::WaitForPreviousFrame()
-    {
-        assert(mInFlightFences.size() > 0);
-        vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
-        vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
     }
 
     void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix)

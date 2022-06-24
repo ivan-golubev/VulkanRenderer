@@ -45,7 +45,6 @@ namespace gg
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
 		void Present(uint32_t imageIndex);
 		void SubmitCommands();
-		void WaitForPreviousFrame();
 		void UploadGeometry();
 
 		void CleanupSwapChain();
