@@ -813,6 +813,8 @@ namespace gg {
     void VulkanRenderer::ResizeWindow()
     {
         RecreateSwapChain();
+        float windowAspectRatio{ mWidth / static_cast<float>(mHeight) };
+        mCamera->UpdateProjectionMatrix(windowAspectRatio);
         mWindowResized = false;
     }
 
@@ -957,12 +959,17 @@ namespace gg {
     {
         vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
-        if (mWindowResized)
+        uint32_t imageIndex;
+        VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
             ResizeWindow();
-            float windowAspectRatio{ mWidth / static_cast<float>(mHeight) };
-            mCamera->UpdateProjectionMatrix(windowAspectRatio);
+            return;
         }
+        else if (result != VK_SUCCESS)
+            throw std::runtime_error("failed to acquire swap chain image!");
+
         /* Rotate the model */
         auto const elapsedTimeMs = Application::Get().GetTimeManager().GetCurrentTimeMs();
         auto const rotation = 0.0002f * DirectX::XM_PI * elapsedTimeMs;
@@ -982,19 +989,6 @@ namespace gg {
         vkUnmapMemory(mDevice, mUniformBuffersMemory[mCurrentFrame]);
         /***********************/
 
-        uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) 
-        {
-            RecreateSwapChain();
-            return;
-        }
-        else if (result != VK_SUCCESS) 
-        {
-            throw std::runtime_error("failed to acquire swap chain image!");
-        }
-
         vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
         /* Record all the commands we need to render the scene into the command list. */
@@ -1002,11 +996,16 @@ namespace gg {
         /* Execute the commands */
         SubmitCommands();
         /* Present the frame and inefficiently wait for the frame to render. */
-        Present(imageIndex);
+        result = Present(imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || mWindowResized)
+            ResizeWindow();
+        else if (result != VK_SUCCESS)
+            throw std::runtime_error("failed to present swap chain image!");
         mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    void VulkanRenderer::Present(uint32_t imageIndex)
+    VkResult VulkanRenderer::Present(uint32_t imageIndex)
     {
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1017,7 +1016,7 @@ namespace gg {
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &imageIndex;
-        vkQueuePresentKHR(mGraphicsQueue, &presentInfo);
+        return vkQueuePresentKHR(mGraphicsQueue, &presentInfo);
     }
 
     void VulkanRenderer::SubmitCommands()

@@ -16,6 +16,7 @@ void MainLoop()
 {
     using namespace std::chrono_literals;
     bool isRunning{ true };
+    bool windowMinimized{ false };
 
     while (isRunning)
     {
@@ -29,8 +30,16 @@ void MainLoop()
                     isRunning = false;
                     break;
                 case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED && Application::IsInitialized())
-                        Application::Get().OnWindowResized(event.window.data1, event.window.data2);
+                    if (Application::IsInitialized())
+                    {
+                        auto windowEvent = event.window.event;
+                        if (windowEvent == SDL_WINDOWEVENT_RESIZED)
+                            Application::Get().OnWindowResized(event.window.data1, event.window.data2);
+                        else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
+                            windowMinimized = true;
+                        else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
+                            windowMinimized = false;
+                    }
                     break;
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
@@ -47,7 +56,8 @@ void MainLoop()
                     break;
             }
         }
-        Application::Get().Tick();
+        if (!windowMinimized)
+            Application::Get().Tick();
         // TODO: without this wait the camera won't move, need to investigate
         std::this_thread::sleep_for(1ms);
     }

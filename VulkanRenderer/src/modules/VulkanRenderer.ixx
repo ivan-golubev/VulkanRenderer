@@ -43,7 +43,7 @@ namespace gg
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
-		void Present(uint32_t imageIndex);
+		VkResult Present(uint32_t imageIndex);
 		void SubmitCommands();
 		void UploadGeometry();
 
