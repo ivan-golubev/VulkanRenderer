@@ -22,6 +22,8 @@ namespace gg
 
 		void Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
+		void OnWindowMinimized();
+		void OnWindowRestored();
 		void OnKeyPressed(SDL_Keycode, bool isDown);
 
 		TimeManager& GetTimeManager() const;
@@ -31,6 +33,8 @@ namespace gg
 		~Application();
 
 		static Application* INSTANCE;
+
+		bool mPaused{ false };
 
 		std::unique_ptr<TimeManager> mTimeManager{};
 		std::unique_ptr<InputManager> mInputManager{};

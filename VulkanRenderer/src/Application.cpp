@@ -68,12 +68,23 @@ namespace gg
 	void Application::Tick()
 	{
 		uint64_t dt = mTimeManager->Tick();
-		mRenderer->Render(dt);
+		if (!mPaused)
+			mRenderer->Render(dt);
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		mRenderer->OnWindowResized(width, height);
+	}
+
+	void Application::OnWindowMinimized()
+	{
+		mPaused = true;
+	}
+
+	void Application::OnWindowRestored()
+	{
+		mPaused = false;
 	}
 
 	void Application::OnKeyPressed(SDL_Keycode key, bool isDown)

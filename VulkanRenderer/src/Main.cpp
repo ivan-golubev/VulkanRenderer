@@ -2,9 +2,9 @@
 #include <exception>
 #include <format>
 #include <cstdlib>
-
 #include <chrono>
 #include <thread>
+#include <cassert>
 
 import Application;
 import ErrorHandling;
@@ -12,54 +12,65 @@ import Logging;
 
 using namespace gg;
 
-void MainLoop()
+void MainLoop(Application& app)
 {
     using namespace std::chrono_literals;
+
+    assert(Application::IsInitialized());
     bool isRunning{ true };
-    bool windowMinimized{ false };
+    
+    auto& timeManager{ app.GetTimeManager() };
+    uint64_t lastEventPollMs{ 0 };
+    constexpr uint64_t EVENT_POLL_INTERVAL_MS{ 16ULL }; // Poll 60 times per sec.
 
     while (isRunning)
     {
-        SDL_Event event;
-        // Poll for user input.
-        while (SDL_PollEvent(&event)) 
+        uint64_t currentTimeMs{ timeManager.GetCurrentTimeMs() };
+        bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
+
+        if (needToPollEvents)
         {
-            switch (event.type) 
+            lastEventPollMs = currentTimeMs;
+
+            SDL_Event event;
+            // Poll for user input.
+            while (SDL_PollEvent(&event))
             {
+                switch (event.type)
+                {
                 case SDL_QUIT:
                     isRunning = false;
                     break;
                 case SDL_WINDOWEVENT:
-                    if (Application::IsInitialized())
-                    {
-                        auto windowEvent = event.window.event;
-                        if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-                            Application::Get().OnWindowResized(event.window.data1, event.window.data2);
-                        else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-                            windowMinimized = true;
-                        else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-                            windowMinimized = false;
-                    }
-                    break;
+                {
+                    auto windowEvent{ event.window.event };
+                    if (windowEvent == SDL_WINDOWEVENT_RESIZED)
+                        app.OnWindowResized(event.window.data1, event.window.data2);
+                    else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
+                        app.OnWindowMinimized();
+                    else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
+                        app.OnWindowRestored();
+                }
+                break;
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
                 {
                     SDL_Keycode key{ event.key.keysym.sym };
                     if (key == SDLK_ESCAPE)
                         isRunning = false;
-                    else if (Application::IsInitialized())
-                        Application::Get().OnKeyPressed(key, event.type == SDL_KEYDOWN);
+                    else
+                        app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
                     break;
                 }
                 default:
                     // Do nothing.
                     break;
+                }
             }
         }
-        if (!windowMinimized)
-            Application::Get().Tick();
-        // TODO: without this wait the camera won't move, need to investigate
-        std::this_thread::sleep_for(1ms);
+        app.Tick();
+        /* Don't do the next tick immediately */
+        std::this_thread::sleep_for(0.25ms);
     }
 }
 
@@ -94,7 +105,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    MainLoop();
+    MainLoop(Application::Get());
     Application::Destroy();
     return EXIT_SUCCESS;
 }
