@@ -20,29 +20,29 @@ namespace gg {
 
     void Camera::UpdateCamera(uint64_t deltaTimeMs) 
     {
-        auto& inputManager = Application::Get().GetInputManager();
+        auto inputManager = Application::Get()->GetInputManager();
         float const CAM_MOVE_AMOUNT{ CAM_MOVE_SPEED * deltaTimeMs / 1000.0f };
         {
             XMVECTOR const moveFB{ XMVectorScale(forward, CAM_MOVE_AMOUNT) };
-            if (inputManager.IsKeyDown(InputAction::MoveCameraForward))
+            if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
                 mCameraPos = XMVectorAdd(mCameraPos, moveFB);
-            if (inputManager.IsKeyDown(InputAction::MoveCameraBack))
+            if (inputManager->IsKeyDown(InputAction::MoveCameraBack))
                 mCameraPos = XMVectorSubtract(mCameraPos, moveFB);
         }
         {
             XMVECTOR const moveLR{ XMVectorScale(right, CAM_MOVE_AMOUNT) };
-            if (inputManager.IsKeyDown(InputAction::MoveCameraRight))
+            if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
                 mFocusPoint = XMVectorAdd(mFocusPoint, moveLR);
-            if (inputManager.IsKeyDown(InputAction::MoveCameraLeft))
+            if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
                 mFocusPoint = XMVectorSubtract(mFocusPoint, moveLR);
         }
         {
             XMVECTOR const moveUD{ XMVectorScale(up, CAM_MOVE_AMOUNT) };
-            if (inputManager.IsKeyDown(InputAction::RaiseCamera)) {
+            if (inputManager->IsKeyDown(InputAction::RaiseCamera)) {
                 mCameraPos = XMVectorAdd(mCameraPos, moveUD);
                 mFocusPoint = XMVectorAdd(mFocusPoint, moveUD);
             }
-            if (inputManager.IsKeyDown(InputAction::LowerCamera)) {
+            if (inputManager->IsKeyDown(InputAction::LowerCamera)) {
                 mCameraPos = XMVectorSubtract(mCameraPos, moveUD);
                 mFocusPoint = XMVectorSubtract(mFocusPoint, moveUD);
             }
@@ -50,15 +50,15 @@ namespace gg {
         {
             float const CAM_TURN_AMOUNT{ CAM_TURN_SPEED * deltaTimeMs / 1000.0f };
             XMVECTOR const moveLR{ XMVectorScale(right, CAM_TURN_AMOUNT) };
-            if (inputManager.IsKeyDown(InputAction::TurnCameraRight))
+            if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
                 mFocusPoint = XMVectorAdd(mFocusPoint, moveLR);
-            if (inputManager.IsKeyDown(InputAction::TurnCameraLeft))
+            if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
                 mFocusPoint = XMVectorSubtract(mFocusPoint, moveLR);
 
             XMVECTOR const moveUP{ XMVectorScale(up, CAM_TURN_AMOUNT) };
-            if (inputManager.IsKeyDown(InputAction::LookCameraUp))
+            if (inputManager->IsKeyDown(InputAction::LookCameraUp))
                 mFocusPoint = XMVectorAdd(mFocusPoint, moveUP);
-            if (inputManager.IsKeyDown(InputAction::LookCameraDown))
+            if (inputManager->IsKeyDown(InputAction::LookCameraDown))
                 mFocusPoint = XMVectorSubtract(mFocusPoint, moveUP);
         }
         mViewMatrix = XMMatrixLookAtLH(mCameraPos, mFocusPoint, up);

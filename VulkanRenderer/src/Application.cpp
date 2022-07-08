@@ -13,20 +13,20 @@ import TimeManager;
 
 namespace gg
 {
-	Application* Application::INSTANCE{ nullptr };
+	std::shared_ptr<Application> Application::INSTANCE{ nullptr };
 
-	Application& Application::Init(uint32_t width, uint32_t height, SDL_Window* windowHandle)
+	std::shared_ptr<Application> Application::Init(uint32_t width, uint32_t height, SDL_Window* windowHandle)
 	{
 		assert(!INSTANCE);
 		if (!INSTANCE)
-			INSTANCE = new Application(width, height, windowHandle);
-		return *INSTANCE;
+			INSTANCE = std::make_shared<Application>(width, height, windowHandle);
+		return INSTANCE;
 	}
 
 	void Application::Destroy()
 	{
 		assert(INSTANCE);
-		delete INSTANCE;
+		INSTANCE.reset();
 	}
 
 	bool Application::IsInitialized()
@@ -34,16 +34,17 @@ namespace gg
 		return nullptr != INSTANCE;
 	}
 
-	Application& Application::Get()
+	std::shared_ptr<Application> Application::Get()
 	{
 		assert(INSTANCE);
-		return *INSTANCE;
+		return INSTANCE;
 	}
 
 	Application::Application(uint32_t width, uint32_t height, SDL_Window* windowHandle)
 		: mTimeManager{ std::make_unique<TimeManager>() }
 		, mInputManager{ std::make_unique<InputManager>() }
 		, mRenderer{ std::make_unique<VulkanRenderer>(width, height, windowHandle)}
+		, mModelLoader{ std::make_unique<ModelLoader>() }
 	{
 		/* Check for DirectX Math library support. */
 		if (!DirectX::XMVerifyCPUSupport())
@@ -52,17 +53,27 @@ namespace gg
 
 	Application::~Application() 
 	{
-		DebugLog(DebugLevel::Info, L"Shutting down the application");
+		DebugLog(DebugLevel::Info, "Shutting down the application");
 	}
 
-	TimeManager& Application::GetTimeManager() const 
+	std::shared_ptr<TimeManager> Application::GetTimeManager() 
 	{
-		return *mTimeManager;
+		return mTimeManager;
 	}
 
-	InputManager& Application::GetInputManager() const 
+	std::shared_ptr<InputManager> Application::GetInputManager()
 	{
-		return *mInputManager;
+		return mInputManager;
+	}
+
+	std::shared_ptr<ModelLoader> Application::GetModelLoader()
+	{
+		return mModelLoader;
+	}
+
+	std::shared_ptr<VulkanRenderer> Application::GetRenderer()
+	{
+		return mRenderer;
 	}
 
 	void Application::Tick()

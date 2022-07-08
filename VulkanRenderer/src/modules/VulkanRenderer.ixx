@@ -13,6 +13,7 @@ import Camera;
 import Input;
 import Vertex;
 import TimeManager;
+import Model;
 
 using DirectX::XMMATRIX;
 
@@ -22,6 +23,7 @@ namespace gg
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();
+		void UploadGeometry(Model const&);
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(uint64_t deltaTimeMs);
 	private:
@@ -37,15 +39,14 @@ namespace gg
 		void CreateCommandPool();
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
-		void CreateVertexBuffer();
-		void CreateIndexBuffer();
+		void CreateVertexBuffer(Model const&);
+		void CreateIndexBuffer(Model const&);
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
 		VkResult Present(uint32_t imageIndex);
 		void SubmitCommands();
-		void UploadGeometry();
 
 		void CleanupSwapChain();
 		void RecreateSwapChain();

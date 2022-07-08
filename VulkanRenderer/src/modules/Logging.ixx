@@ -10,9 +10,6 @@ export namespace gg
 		Error
 	};
 
-	void DebugLog(DebugLevel level, std::wstring const &);
-	void DebugLog(DebugLevel level, wchar_t const *);
-
-	std::wstring ToWString(std::string const &);
+	void DebugLog(DebugLevel level, std::string const&);
 
 } // namespace gg

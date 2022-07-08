@@ -27,6 +27,7 @@ import ErrorHandling;
 import GlobalSettings;
 import Input;
 import Vertex;
+import ModelLoader;
 
 using namespace DirectX;
 
@@ -110,7 +111,6 @@ namespace gg {
         CreateFrameBuffers();
         CreateCommandPool();
 
-        UploadGeometry();
         CreateCommandBuffers();
         CreateSyncObjects();
     }
@@ -677,17 +677,17 @@ namespace gg {
         vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);
     }
 
-    void VulkanRenderer::UploadGeometry()
+    void VulkanRenderer::UploadGeometry(Model const & model)
     {
-        CreateVertexBuffer();
-        CreateIndexBuffer();
+        CreateVertexBuffer(model);
+        CreateIndexBuffer(model);
     }
 
-    void VulkanRenderer::CreateVertexBuffer() 
+    void VulkanRenderer::CreateVertexBuffer(Model const& model)
     {
         /* Initialize the vertices. TODO: move to a separate class */
         // TODO: in fact, cubes are not fun, read data from an .fbx
-        std::vector<Vertex> const vertices{
+        std::vector<Vertex> const verticesData{
             /*  x      y      z     w     r      g    b     a */
             {-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // 0
             {-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f}, // 1
@@ -698,7 +698,9 @@ namespace gg {
             { 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, // 6
             { 1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}, // 7
         };
-        uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
+        //auto vertices = &verticesData;
+        auto vertices = &model.meshes[0].Vertices;
+        uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices->size() * sizeof(Vertex));
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -706,7 +708,7 @@ namespace gg {
 
         void* mappedData;
         vkMapMemory(mDevice, stagingBufferMemory, 0, VB_sizeBytes, 0, &mappedData);
-        memcpy(mappedData, vertices.data(), static_cast<size_t>(VB_sizeBytes));
+        memcpy(mappedData, vertices->data(), static_cast<size_t>(VB_sizeBytes));
         vkUnmapMemory(mDevice, stagingBufferMemory);
 
         VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -717,9 +719,9 @@ namespace gg {
         vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
     }
 
-    void VulkanRenderer::CreateIndexBuffer()
+    void VulkanRenderer::CreateIndexBuffer(Model const& model)
     {
-        std::vector<uint32_t> const indices{
+        std::vector<uint32_t> const indicesData{
             0, 1, 2, 0, 2, 3,
             4, 6, 5, 4, 7, 6,
             4, 5, 1, 4, 1, 0,
@@ -727,8 +729,10 @@ namespace gg {
             1, 5, 6, 1, 6, 2,
             4, 0, 3, 4, 3, 7
         };
-        mIndexCount = static_cast<uint32_t>(indices.size());
-        uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
+        //auto indices = &indicesData;
+        auto indices = &model.meshes[0].Indices;
+        mIndexCount = static_cast<uint32_t>(indices->size());
+        uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices->size() * sizeof(uint32_t));
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -736,7 +740,7 @@ namespace gg {
 
         void* mappedData;
         vkMapMemory(mDevice, stagingBufferMemory, 0, IB_sizeBytes, 0, &mappedData);
-        memcpy(mappedData, indices.data(), static_cast<size_t>(IB_sizeBytes));
+        memcpy(mappedData, indices->data(), static_cast<size_t>(IB_sizeBytes));
         vkUnmapMemory(mDevice, stagingBufferMemory);
 
         VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
@@ -971,7 +975,7 @@ namespace gg {
             throw std::runtime_error("failed to acquire swap chain image!");
 
         /* Rotate the model */
-        auto const elapsedTimeMs = Application::Get().GetTimeManager().GetCurrentTimeMs();
+        auto const elapsedTimeMs = Application::Get()->GetTimeManager()->GetCurrentTimeMs();
         auto const rotation = 0.0002f * DirectX::XM_PI * elapsedTimeMs;
         XMMATRIX const modelMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation));
 

@@ -9,35 +9,39 @@ export module Application;
 import VulkanRenderer;
 import Input;
 import TimeManager;
+import ModelLoader;
 
 namespace gg 
 {
 	export class Application 
 	{
 	public:
-		static Application& Init(uint32_t width, uint32_t height, SDL_Window*);
+		static std::shared_ptr<Application> Init(uint32_t width, uint32_t height, SDL_Window*);
 		static void Destroy();
 		static bool IsInitialized();
-		static Application& Get();
+		static std::shared_ptr<Application> Get();
 
+		Application(uint32_t width, uint32_t height, SDL_Window*);
+		~Application();
 		void Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void OnWindowMinimized();
 		void OnWindowRestored();
 		void OnKeyPressed(SDL_Keycode, bool isDown);
 
-		TimeManager& GetTimeManager() const;
-		InputManager& GetInputManager() const;
+		std::shared_ptr<InputManager> GetInputManager();
+		std::shared_ptr<ModelLoader> GetModelLoader();
+		std::shared_ptr<TimeManager> GetTimeManager();
+		std::shared_ptr<VulkanRenderer> GetRenderer();
 	private:
-		Application(uint32_t width, uint32_t height, SDL_Window*);
-		~Application();
 
-		static Application* INSTANCE;
+		static std::shared_ptr<Application> INSTANCE;
 
 		bool mPaused{ false };
 
-		std::unique_ptr<TimeManager> mTimeManager{};
-		std::unique_ptr<InputManager> mInputManager{};
-		std::unique_ptr<VulkanRenderer> mRenderer{};
+		std::shared_ptr<InputManager> mInputManager;
+		std::shared_ptr<ModelLoader> mModelLoader;
+		std::shared_ptr<TimeManager> mTimeManager;
+		std::shared_ptr<VulkanRenderer> mRenderer;
 	};
 } // namespace gg 
