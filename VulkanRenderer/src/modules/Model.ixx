@@ -8,6 +8,15 @@ import ShaderProgram;
 
 namespace gg
 {
+	export struct TextureCoord
+	{
+		TextureCoord() {}
+		TextureCoord(float _u, float _v);
+
+		float u{ 0.0f };
+		float v{ 0.0f };
+	};
+
 	export struct Mesh
 	{
 		Mesh() = default;
@@ -15,8 +24,8 @@ namespace gg
 		Mesh& operator=(Mesh&&) noexcept;
 
 		std::vector<Vertex> Vertices{};
+		std::vector<TextureCoord> TextureCoords0{};
 		std::vector<uint32_t> Indices{};
-		//std::vector<TextureCoord> TextureCoords{};
 
 		unsigned char* Texture{ nullptr };
 		unsigned int TextureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
@@ -26,7 +35,6 @@ namespace gg
 		uint32_t VerticesSizeBytes() const;
 		uint32_t IndicesSizeBytes() const;
 		uint32_t GetIndexCount() const;
-		//unsigned int TextureCoordsSizeBytes() const { return static_cast<unsigned int>(Vertices.size()) * sizeof(TextureCoord); }
 	};
 
 	export struct Model

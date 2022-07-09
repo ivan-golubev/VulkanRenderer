@@ -11,11 +11,9 @@ namespace gg
 	export struct Vertex
 	{
 		XMVECTOR Position;
-		XMVECTOR Color;
 
-		Vertex(float x, float y, float z, float w, float r, float g, float b, float a)
+		Vertex(float x, float y, float z, float w)
 			: Position{x, y, z, w}
-			, Color{r, g, b, a}
 		{}
 
 		static VkVertexInputBindingDescription GetBindingDescription();

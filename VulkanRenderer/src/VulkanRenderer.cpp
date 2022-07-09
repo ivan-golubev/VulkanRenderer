@@ -3,15 +3,17 @@ module;
 #include <array>
 #include <cstdint>
 #include <DirectXMath.h>
+#include <filesystem>
 #include <format>
 #include <glm/glm.hpp>
 #include <limits>
 #include <optional>
-#include <set>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_vulkan.h>
+#include <set>
+#include <stb_image.h>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -76,6 +78,7 @@ namespace gg
 		CreateDescriptorSets();
 		CreateFrameBuffers();
 		CreateCommandPool();
+		CreateTextureImage();
 
 		CreateCommandBuffers();
 		CreateSyncObjects();
@@ -429,6 +432,18 @@ namespace gg
 		{
 			throw std::runtime_error("failed to create command pool!");
 		}
+	}
+
+	void VulkanRenderer::CreateTextureImage()
+	{
+		// TODO: move this outside of the renderer
+		int texWidth, texHeight, texChannels;
+		std::string textureFileAbsPath{ std::filesystem::absolute("../../textures/CubeColor.png").generic_string() };
+		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+		if (!pixels)
+			throw std::runtime_error("failed to load texture image!");
 	}
 
 	void VulkanRenderer::CreateCommandBuffers()

@@ -38,6 +38,7 @@ namespace gg
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
+		void CreateTextureImage();
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void CreateVertexBuffer(Mesh const&);

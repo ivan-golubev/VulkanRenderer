@@ -95,7 +95,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders\colored_surface.hlsl">
+    <FxCompile Include="shaders\textured_surface.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -73,11 +73,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_PIX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;STB_IMAGE_IMPLEMENTATION;_DEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_PIX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -100,11 +100,11 @@ copy $(ADOBE_FBX_SDK)\lib\vs2019\x64\debug\libfbxsdk.dll $(TargetDir)</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_PIX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;STB_IMAGE_IMPLEMENTATION;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_PIX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -129,11 +129,11 @@ copy $(ADOBE_FBX_SDK)\lib\vs2019\x64\release\libfbxsdk.dll $(TargetDir)</Command
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;FINAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FBXSDK_SHARED;VK_USE_PLATFORM_WIN32_KHR;SDL_MAIN_HANDLED;STB_IMAGE_IMPLEMENTATION;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;FINAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -179,8 +179,10 @@ copy $(ADOBE_FBX_SDK)\lib\vs2019\x64\release\libfbxsdk.dll $(TargetDir)</Command
     <ClCompile Include="src\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders\colored_surface.hlsl">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
+    <FxCompile Include="shaders\textured_surface.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

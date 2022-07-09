@@ -13,6 +13,89 @@ import Model;
 import ShaderProgram;
 import ErrorHandling;
 
+namespace
+{
+	using namespace gg;
+	void readUVs(FbxMesh* fbxMesh, Mesh& mesh)
+	{
+		/* Get all UV set names */
+		FbxStringList uvSetNames;
+		fbxMesh->GetUVSetNames(uvSetNames);
+		for (int i = 0; i < uvSetNames.GetCount(); ++i)
+		{
+			char const* setName = uvSetNames.GetStringAt(i);
+			FbxGeometryElementUV const* uvElement = fbxMesh->GetElementUV(setName);
+			if (!uvElement)
+				continue;
+			
+			/* only support mapping mode eByPolygonVertex and eByControlPoint */
+			if (uvElement->GetMappingMode() != FbxGeometryElement::eByPolygonVertex
+			 && uvElement->GetMappingMode() != FbxGeometryElement::eByControlPoint)
+				return;
+
+			auto mapping = uvElement->GetMappingMode();
+
+			/* index array, which holds the index referenced to the UV data */
+			bool const useIndex = uvElement->GetReferenceMode() != FbxGeometryElement::eDirect;
+			int const indexCount = (useIndex) ? uvElement->GetIndexArray().GetCount() : 0;
+			/* iterating through the data by polygon */
+			if (uvElement->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+			{
+				for (int polyIndex = 0; polyIndex < fbxMesh->GetPolygonCount(); ++polyIndex)
+				{
+					/* build the max index array that we need to pass into MakePoly */
+					int const polySize = fbxMesh->GetPolygonSize(polyIndex);
+					for (int vertIx = 0; vertIx < polySize; ++vertIx)
+					{
+						FbxVector2 uvValue;
+						/* get the index of the current vertex in control points array */
+						int polyVertIx = fbxMesh->GetPolygonVertex(polyIndex, vertIx);
+						/* the UV index depends on the reference mode */
+						int uvIndex = useIndex ? uvElement->GetIndexArray().GetAt(polyVertIx) : polyVertIx;
+						uvValue = uvElement->GetDirectArray().GetAt(uvIndex);
+
+						/* just support one UV set for the first iteration */
+						mesh.TextureCoords0.emplace_back(
+							static_cast<float>(uvValue.mData[0]),
+							static_cast<float>(uvValue.mData[1])
+						);
+					}
+				}
+			}
+			else if (uvElement->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+			{
+				int polyIndexCounter = 0;
+				for (int polyIndex = 0; polyIndex < fbxMesh->GetPolygonCount(); ++polyIndex)
+				{
+					/* build the max index array that we need to pass into MakePoly */
+					int const polySize = fbxMesh->GetPolygonSize(polyIndex);
+					for (int vertIx = 0; vertIx < polySize; ++vertIx)
+					{
+						if (polyIndexCounter < indexCount)
+						{
+							FbxVector2 uvValue;
+							/* the UV index depends on the reference mode */
+							int uvIndex = useIndex ? uvElement->GetIndexArray().GetAt(polyIndexCounter) : polyIndexCounter;
+							uvValue = uvElement->GetDirectArray().GetAt(uvIndex);
+						
+							/* just support one UV set for the first iteration */
+							mesh.TextureCoords0.emplace_back(
+								static_cast<float>(uvValue.mData[0]),
+								static_cast<float>(uvValue.mData[1])
+							);
+
+							polyIndexCounter++;
+						}
+					}
+				}
+			}
+
+			/* just support one UV set for the first iteration */
+			break;
+		}
+	}
+}
+
 namespace gg
 {
 	ModelLoader::ModelLoader()
@@ -74,8 +157,7 @@ namespace gg
 					static_cast<float>(vertices[j].mData[0]),
 					static_cast<float>(vertices[j].mData[1]),
 					static_cast<float>(vertices[j].mData[2]),
-					1.0f,
-					0.0f, 0.0f, 1.0f, 1.0f
+					1.0f
 				);
 			}
 			auto indices = fbxMesh->GetPolygonVertices();
@@ -90,6 +172,7 @@ namespace gg
 					mesh.Indices.push_back(controlPointIndex);
 				}
 			}
+			readUVs(fbxMesh, mesh);
 			outModel.meshes.emplace_back(std::move(mesh));
 		}
 		fbxScene->Destroy();
