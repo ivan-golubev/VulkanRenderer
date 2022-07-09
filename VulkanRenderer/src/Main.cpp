@@ -17,7 +17,7 @@ void MainLoop(std::shared_ptr<Application> app)
 {
     using namespace std::chrono_literals;
 
-    assert(Application::IsInitialized());
+    BreakIfFalse(Application::IsInitialized());
     bool isRunning{ true };
     
     auto timeManager{ app->GetTimeManager() };
@@ -98,8 +98,8 @@ int main()
     {
         auto app = Application::Init(width, height, window);
         auto modelLoader = app->GetModelLoader();
-        Model model{ modelLoader->LoadModel("../../models/cube.fbx", "shaders/colored_surface_VS.spv", "shaders/colored_surface_PS.spv") };
-        app->GetRenderer()->UploadGeometry(model);
+        std::unique_ptr<Model> model{ modelLoader->LoadModel("../../models/cube.fbx", "shaders/colored_surface_VS.spv", "shaders/colored_surface_PS.spv") };
+        app->GetRenderer()->UploadGeometry(std::move(model));
         DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
     }
     catch (std::exception const& e)

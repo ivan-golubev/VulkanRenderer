@@ -12,8 +12,8 @@ namespace gg
 		uint64_t GetCurrentTimeMs() const;
 		float GetCurrentTimeSec() const;
 	private:
-		uint64_t ticksPerSec{ 0 };
-		uint64_t currentTimeTicks{ 0 };
-		uint64_t startTimeTicks{ 0 };
+		uint64_t ticksPerSec{};
+		uint64_t currentTimeTicks{};
+		uint64_t startTimeTicks{};
 	};
 } // namespace gg

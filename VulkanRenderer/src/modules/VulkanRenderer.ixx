@@ -23,9 +23,10 @@ namespace gg
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();
-		void UploadGeometry(Model const&);
+		void UploadGeometry(std::unique_ptr<Model>);
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(uint64_t deltaTimeMs);
+		VkDevice GetDevice();
 	private:
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
 		void SelectPhysicalDevice();
@@ -39,8 +40,8 @@ namespace gg
 		void CreateCommandPool();
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
-		void CreateVertexBuffer(Model const&);
-		void CreateIndexBuffer(Model const&);
+		void CreateVertexBuffer(Mesh const&);
+		void CreateIndexBuffer(Mesh const&);
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
@@ -87,49 +88,47 @@ namespace gg
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		static constexpr int8_t MAX_FRAMES_IN_FLIGHT{ 2 };
-		uint32_t mWidth;
-		uint32_t mHeight;
-		SDL_Window* mWindowHandle;
+		uint32_t mWidth{};
+		uint32_t mHeight{};
+		SDL_Window* mWindowHandle{};
 		bool mWindowResized{ true };
 
-		VkCommandPool mCommandPool;
+		VkCommandPool mCommandPool{};
 		std::vector<VkCommandBuffer> mCommandBuffers;
-		VkRenderPass mRenderPass;
-		VkDescriptorSetLayout mDescriptorSetLayout;
-		VkPipelineLayout mPipelineLayout;
-		VkPipeline mGraphicsPipeline;
+		VkRenderPass mRenderPass{};
+		VkDescriptorSetLayout mDescriptorSetLayout{};
+		VkPipelineLayout mPipelineLayout{};
+		VkPipeline mGraphicsPipeline{};
 
 		/* Render Targets */
 		std::vector<VkImage> mSwapChainImages;
 		std::vector<VkImageView> mSwapChainImageViews;
 		std::vector<VkFramebuffer> mFrameBuffers;
-		VkFormat mSwapChainImageFormat;
-		VkExtent2D mSwapChainExtent;
+		VkFormat mSwapChainImageFormat{};
+		VkExtent2D mSwapChainExtent{};
 
 		uint32_t mCurrentFrame{ 0 };
 
 		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
-		VkBuffer mVB;
-		VkBuffer mIB;
-		VkDeviceMemory mVertexBufferMemory;
-		VkDeviceMemory mIndexBufferMemory;
+		VkBuffer mVB{};
+		VkBuffer mIB{};
+		VkDeviceMemory mVertexBufferMemory{};
+		VkDeviceMemory mIndexBufferMemory{};
 
 		std::vector<VkBuffer> mUniformBuffers;
 		std::vector<VkDeviceMemory> mUniformBuffersMemory;
 		VkDescriptorPool mDescriptorPool;
 		std::vector<VkDescriptorSet> mDescriptorSets;
 
-		/* TODO: move this to a "game_object" class */
-		uint32_t mIndexCount;
-
+		std::unique_ptr<Model> mModel;
 		std::unique_ptr<Camera> mCamera;
 
-		VkDevice mDevice;
-		VkInstance mInstance;
-		VkPhysicalDevice mPhysicalDevice;
-		VkQueue mGraphicsQueue;
-		VkSurfaceKHR mSurface;
-		VkSwapchainKHR mSwapChain;
+		VkDevice mDevice{};
+		VkInstance mInstance{};
+		VkPhysicalDevice mPhysicalDevice{};
+		VkQueue mGraphicsQueue{};
+		VkSurfaceKHR mSurface{};
+		VkSwapchainKHR mSwapChain{};
 		/* Synchronization objects */
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
 		std::vector<VkSemaphore> mRenderFinishedSemaphores;

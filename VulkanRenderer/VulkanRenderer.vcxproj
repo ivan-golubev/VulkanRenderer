@@ -169,9 +169,11 @@ copy $(ADOBE_FBX_SDK)\lib\vs2019\x64\release\libfbxsdk.dll $(TargetDir)</Command
     <ClCompile Include="src\modules\Logging.ixx" />
     <ClCompile Include="src\modules\Model.ixx" />
     <ClCompile Include="src\modules\ModelLoader.ixx" />
+    <ClCompile Include="src\modules\ShaderProgram.ixx" />
     <ClCompile Include="src\modules\TimeManager.ixx" />
     <ClCompile Include="src\modules\Vertex.ixx" />
     <ClCompile Include="src\modules\VulkanRenderer.ixx" />
+    <ClCompile Include="src\ShaderProgram.cpp" />
     <ClCompile Include="src\TimeManager.cpp" />
     <ClCompile Include="src\Vertex.cpp" />
     <ClCompile Include="src\VulkanRenderer.cpp" />

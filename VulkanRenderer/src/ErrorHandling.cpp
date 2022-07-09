@@ -5,10 +5,13 @@ module;
 #include <windows.h>
 module ErrorHandling;
 
-namespace gg 
+import GlobalSettings;
+
+namespace gg
 {
-	ComException::ComException(HRESULT hr) : returnCode{ hr } 
-	{}
+	ComException::ComException(HRESULT hr) : returnCode{ hr }
+	{
+	}
 
 	std::wstring ComException::whatString() const
 	{
@@ -17,7 +20,7 @@ namespace gg
 
 	char const* ComException::what() const
 	{
-		static char s_str[64] {};
+		static char s_str[64]{};
 		sprintf_s(s_str, "Failure with HRESULT of %08X", static_cast<unsigned int>(returnCode));
 		return s_str;
 	}
@@ -26,6 +29,15 @@ namespace gg
 	{
 		if (FAILED(hr))
 			throw ComException(hr);
+	}
+
+	void BreakIfFalse(bool condition)
+	{
+		if constexpr (IsDebug())
+		{
+			if (!condition)
+				__debugbreak();
+		}
 	}
 
 } // namespace gg

@@ -8,7 +8,6 @@ using DirectX::XMVECTOR;
 
 namespace gg 
 {
-
 	export struct Vertex
 	{
 		XMVECTOR Position;

@@ -2,14 +2,15 @@ module;
 #include <cstdint>
 #include <DirectXMath.h>
 #include <memory>
-#include <SDL2/SDL_video.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_video.h>
 module Application;
 
 import VulkanRenderer;
 import Input;
 import Logging;
 import TimeManager;
+import ErrorHandling;
 
 namespace gg
 {
@@ -17,26 +18,25 @@ namespace gg
 
 	std::shared_ptr<Application> Application::Init(uint32_t width, uint32_t height, SDL_Window* windowHandle)
 	{
-		assert(!INSTANCE);
-		if (!INSTANCE)
-			INSTANCE = std::make_shared<Application>(width, height, windowHandle);
+		BreakIfFalse(!Application::IsInitialized());
+		INSTANCE = std::make_shared<Application>(width, height, windowHandle);
 		return INSTANCE;
 	}
 
 	void Application::Destroy()
 	{
-		assert(INSTANCE);
+		BreakIfFalse(Application::IsInitialized());
 		INSTANCE.reset();
 	}
 
 	bool Application::IsInitialized()
 	{
-		return nullptr != INSTANCE;
+		return INSTANCE.get() != nullptr;
 	}
 
 	std::shared_ptr<Application> Application::Get()
 	{
-		assert(INSTANCE);
+		BreakIfFalse(Application::IsInitialized());
 		return INSTANCE;
 	}
 

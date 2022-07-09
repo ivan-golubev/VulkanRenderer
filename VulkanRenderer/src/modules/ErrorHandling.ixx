@@ -4,9 +4,9 @@ module;
 #include <windows.h>
 export module ErrorHandling;
 
-namespace gg
+export namespace gg
 {
-	export class ComException : public std::exception
+	class ComException : public std::exception
 	{
 	public:
 		ComException(HRESULT hr);
@@ -16,5 +16,6 @@ namespace gg
 		HRESULT returnCode;
 	};
 
-	export void ThrowIfFailed(HRESULT hr);
+	void ThrowIfFailed(HRESULT hr);
+	void BreakIfFalse(bool);
 } // namespace gg
