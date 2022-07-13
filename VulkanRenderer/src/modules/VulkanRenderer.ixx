@@ -39,6 +39,7 @@ namespace gg
 		void CreateFrameBuffers();
 		void CreateCommandPool();
 		void CreateTextureImage();
+		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void CreateVertexBuffer(Mesh const&);
@@ -46,9 +47,16 @@ namespace gg
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
+		
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
-		VkResult Present(uint32_t imageIndex);
+		VkCommandBuffer BeginSingleTimeCommands();
+		void EndSingleTimeCommands(VkCommandBuffer);
 		void SubmitCommands();
+		
+		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
+
+		VkResult Present(uint32_t imageIndex);
 
 		void CleanupSwapChain();
 		void RecreateSwapChain();
@@ -115,6 +123,10 @@ namespace gg
 		VkBuffer mIB{};
 		VkDeviceMemory mVertexBufferMemory{};
 		VkDeviceMemory mIndexBufferMemory{};
+
+		/* Textures. TODO: move to a better place */
+		VkImage mTextureImage;
+		VkDeviceMemory mTextureImageMemory;
 
 		std::vector<VkBuffer> mUniformBuffers;
 		std::vector<VkDeviceMemory> mUniformBuffersMemory;
