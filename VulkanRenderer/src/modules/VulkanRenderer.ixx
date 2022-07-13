@@ -32,14 +32,19 @@ namespace gg
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
 		void CreateSwapChain();
-		void CreateImageViews();
 		void CreateRenderPass();
 		void CreateDescriptorSetLayout();
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
+
+		void CreateImageViews();
 		void CreateTextureImage();
 		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
+		VkImageView CreateImageView(VkImage, VkFormat);
+		void CreateTextureImageView();
+		void CreateTextureSampler();
+
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void CreateVertexBuffer(Mesh const&);
@@ -127,6 +132,8 @@ namespace gg
 		/* Textures. TODO: move to a better place */
 		VkImage mTextureImage;
 		VkDeviceMemory mTextureImageMemory;
+		VkImageView mTextureImageView;
+		VkSampler mTextureSampler;
 
 		std::vector<VkBuffer> mUniformBuffers;
 		std::vector<VkDeviceMemory> mUniformBuffersMemory;
