@@ -123,11 +123,9 @@ namespace gg
 
 		uint32_t mCurrentFrame{ 0 };
 
-		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
+		/* Vertex Buffer for the cube. TODO: There is a better place for it. */
 		VkBuffer mVB{};
-		VkBuffer mIB{};
 		VkDeviceMemory mVertexBufferMemory{};
-		VkDeviceMemory mIndexBufferMemory{};
 
 		/* Textures. TODO: move to a better place */
 		VkImage mTextureImage;

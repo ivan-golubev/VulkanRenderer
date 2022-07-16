@@ -111,7 +111,7 @@ namespace
 				static_cast<float>(vertices[j].mData[0]),
 				static_cast<float>(vertices[j].mData[1]),
 				static_cast<float>(vertices[j].mData[2]),
-				1.0f // w coordinate
+				static_cast<float>(vertices[j].mData[3])
 			);
 		}
 		auto indices = fbxMesh->GetPolygonVertices();
@@ -130,20 +130,42 @@ namespace
 	}
 
 	/* repeated vertices, textured meshes */
-	Mesh readMeshTextured(FbxMesh* fbxMesh, std::vector<XMFLOAT2>& textureCoordinates)
+	Mesh readMeshTextured(FbxMesh* fbxMesh)
 	{
-		Mesh mesh{}; // TODO;
-		//for (int polyIndex = 0; polyIndex < fbxMesh->GetPolygonVertexCount(); ++polyIndex)
-		//{
-		//	fbxMesh->GetPolygonVertices()[]
+		Mesh mesh{};
+		FbxVector4* controlPoints{ fbxMesh->GetControlPoints() };
+		
+		std::string uvSetName0{};
+		{
+			FbxStringList uvSetNames;
+			fbxMesh->GetUVSetNames(uvSetNames);
+			BreakIfFalse(uvSetNames.GetCount() > 0);
+			uvSetName0 = std::string{ uvSetNames.GetStringAt(0) };
+		}
 
-		//	int const polySize = fbxMesh->GetPolygonSize(polyIndex);
-		//	for (int vertIx = 0; vertIx < polySize; ++vertIx)
-		//	{
-		//		fbxMesh->GetPolygonCount()
-		//	}
-		//}
-		//return mesh;
+		for (int polygonIndex{ 0 }; polygonIndex < fbxMesh->GetPolygonCount(); ++polygonIndex)
+			for (int positionInPolygon{ 0 }; positionInPolygon < fbxMesh->GetPolygonSize(polygonIndex); ++positionInPolygon)
+			{
+				/* get an index to a control point */
+				int polygonVertex = fbxMesh->GetPolygonVertex(polygonIndex, positionInPolygon);
+				FbxVector4 vertex = controlPoints[polygonVertex];
+
+				/* get the UV coordinate for this vertex */
+				FbxVector2 UV;
+				bool unmapped;
+				bool uvFetched{ fbxMesh->GetPolygonVertexUV(polygonIndex, positionInPolygon, uvSetName0.c_str(), UV, unmapped) };
+				BreakIfFalse(uvFetched && !unmapped);
+
+				mesh.Vertices.emplace_back(
+					static_cast<float>(vertex.mData[0]),
+					static_cast<float>(vertex.mData[1]),
+					static_cast<float>(vertex.mData[2]),
+					1.0f, // w
+					static_cast<float>(UV.mData[0]),
+					static_cast<float>(UV.mData[1])
+				);
+			}
+		return mesh;
 	}
 }
 
@@ -200,8 +222,7 @@ namespace gg
 			if (!fbxMesh)
 				continue;
 
-			std::vector<XMFLOAT2> textureCoordinates0 = readTextureCoords(fbxMesh);
-			outModel.meshes.emplace_back(readMeshTextured(fbxMesh, textureCoordinates0));
+			outModel.meshes.emplace_back(readMeshTextured(fbxMesh));
 		}
 		fbxScene->Destroy();
 		return true;

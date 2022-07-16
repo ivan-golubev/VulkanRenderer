@@ -722,10 +722,7 @@ namespace gg
 	{
 		mModel = std::move(model);
 		for (auto& m : mModel->meshes)
-		{
 			CreateVertexBuffer(m);
-			CreateIndexBuffer(m);
-		}
 		CreateGraphicsPipeline();
 	}
 
@@ -752,6 +749,9 @@ namespace gg
 
 	void VulkanRenderer::CreateIndexBuffer(Mesh const& mesh)
 	{
+		VkBuffer IB{};
+		VkDeviceMemory IndexBufferMemory{};
+
 		uint32_t const IB_sizeBytes{ mesh.IndicesSizeBytes() };
 
 		VkBuffer stagingBuffer;
@@ -764,8 +764,8 @@ namespace gg
 		vkUnmapMemory(mDevice, stagingBufferMemory);
 
 		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-		CreateBuffer(mIB, mIndexBufferMemory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		CopyBuffer(stagingBuffer, mIB, IB_sizeBytes);
+		CreateBuffer(IB, IndexBufferMemory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		CopyBuffer(stagingBuffer, IB, IB_sizeBytes);
 
 		vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
 		vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
@@ -954,9 +954,7 @@ namespace gg
 		vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
 		vkDestroyBuffer(mDevice, mVB, nullptr);
-		vkDestroyBuffer(mDevice, mIB, nullptr);
 		vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
-		vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
 
 		/* destroys the associated shaders */
 		mModel.reset();
@@ -1090,12 +1088,11 @@ namespace gg
 		VkBuffer vertexBuffers[]{ mVB };
 		VkDeviceSize offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, mIB, 0, VK_INDEX_TYPE_UINT32);
 
 		/* bind a desciptor for the UBO */
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mCurrentFrame], 0, nullptr);
 		for (auto& m : mModel->meshes)
-			vkCmdDrawIndexed(commandBuffer, m.GetIndexCount(), 1, 0, 0, 0);
+			vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
