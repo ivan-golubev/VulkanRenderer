@@ -5,10 +5,6 @@ module Model;
 
 namespace gg
 {
-	TextureCoord::TextureCoord(float _u, float _v) : u{ _u }, v{ _v }
-	{
-	}
-
 	uint32_t Mesh::VerticesSizeBytes() const { return static_cast<uint32_t>(Vertices.size()) * sizeof(Vertex); }
 	uint32_t Mesh::IndicesSizeBytes() const { return static_cast<uint32_t>(Indices.size()) * sizeof(uint32_t); }
 	uint32_t Mesh::GetIndexCount() const { return static_cast<uint32_t>(Indices.size()); }
@@ -16,7 +12,6 @@ namespace gg
 	Mesh::Mesh(Mesh&& other) noexcept
 		: Vertices{ std::move(other.Vertices) }
 		, Indices{ std::move(other.Indices) }
-		, TextureCoords0{ std::move(other.TextureCoords0) }
 	{
 	}
 
@@ -26,10 +21,8 @@ namespace gg
 		{
 			Vertices.clear();
 			Indices.clear();
-			TextureCoords0.clear();
 			Vertices = std::move(other.Vertices);
 			Indices = std::move(other.Indices);
-			TextureCoords0 = std::move(other.TextureCoords0);
 		}
 		return *this;
 	}

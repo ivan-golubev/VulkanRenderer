@@ -1,5 +1,6 @@
 module;
 #include <cassert>
+#include <DirectXMath.h>
 #include <fbxsdk.h>
 #include <filesystem>
 #include <format>
@@ -13,11 +14,15 @@ import Model;
 import ShaderProgram;
 import ErrorHandling;
 
+using DirectX::XMFLOAT2;
+
 namespace
 {
 	using namespace gg;
-	void readUVs(FbxMesh* fbxMesh, Mesh& mesh)
+	std::vector<XMFLOAT2> readTextureCoords(FbxMesh* fbxMesh)
 	{
+		std::vector<XMFLOAT2> result{};
+
 		/* Get all UV set names */
 		FbxStringList uvSetNames;
 		fbxMesh->GetUVSetNames(uvSetNames);
@@ -31,7 +36,7 @@ namespace
 			/* only support mapping mode eByPolygonVertex and eByControlPoint */
 			if (uvElement->GetMappingMode() != FbxGeometryElement::eByPolygonVertex
 			 && uvElement->GetMappingMode() != FbxGeometryElement::eByControlPoint)
-				return;
+				return result;
 
 			auto mapping = uvElement->GetMappingMode();
 
@@ -55,7 +60,7 @@ namespace
 						uvValue = uvElement->GetDirectArray().GetAt(uvIndex);
 
 						/* just support one UV set for the first iteration */
-						mesh.TextureCoords0.emplace_back(
+						result.emplace_back(
 							static_cast<float>(uvValue.mData[0]),
 							static_cast<float>(uvValue.mData[1])
 						);
@@ -79,7 +84,7 @@ namespace
 							uvValue = uvElement->GetDirectArray().GetAt(uvIndex);
 						
 							/* just support one UV set for the first iteration */
-							mesh.TextureCoords0.emplace_back(
+							result.emplace_back(
 								static_cast<float>(uvValue.mData[0]),
 								static_cast<float>(uvValue.mData[1])
 							);
@@ -89,10 +94,56 @@ namespace
 					}
 				}
 			}
-
 			/* just support one UV set for the first iteration */
 			break;
 		}
+		return result;
+	}
+
+	/* unique vertices, indices set */
+	Mesh readMeshIndexed(FbxMesh* fbxMesh)
+	{
+		FbxVector4* vertices = fbxMesh->GetControlPoints();
+		Mesh mesh{};
+		for (int j = 0; j < fbxMesh->GetControlPointsCount(); ++j)
+		{
+			mesh.Vertices.emplace_back(
+				static_cast<float>(vertices[j].mData[0]),
+				static_cast<float>(vertices[j].mData[1]),
+				static_cast<float>(vertices[j].mData[2]),
+				1.0f // w coordinate
+			);
+		}
+		auto indices = fbxMesh->GetPolygonVertices();
+		for (int j = 0; j < fbxMesh->GetPolygonCount(); ++j)
+		{
+			int iNumVertices = fbxMesh->GetPolygonSize(j);
+			BreakIfFalse(iNumVertices == 3);
+
+			for (int k = 0; k < iNumVertices; ++k)
+			{
+				int controlPointIndex = fbxMesh->GetPolygonVertex(j, k);
+				mesh.Indices.push_back(controlPointIndex);
+			}
+		}
+		return mesh;
+	}
+
+	/* repeated vertices, textured meshes */
+	Mesh readMeshTextured(FbxMesh* fbxMesh, std::vector<XMFLOAT2>& textureCoordinates)
+	{
+		Mesh mesh{}; // TODO;
+		//for (int polyIndex = 0; polyIndex < fbxMesh->GetPolygonVertexCount(); ++polyIndex)
+		//{
+		//	fbxMesh->GetPolygonVertices()[]
+
+		//	int const polySize = fbxMesh->GetPolygonSize(polyIndex);
+		//	for (int vertIx = 0; vertIx < polySize; ++vertIx)
+		//	{
+		//		fbxMesh->GetPolygonCount()
+		//	}
+		//}
+		//return mesh;
 	}
 }
 
@@ -149,31 +200,8 @@ namespace gg
 			if (!fbxMesh)
 				continue;
 
-			FbxVector4* vertices = fbxMesh->GetControlPoints();
-			Mesh mesh{};
-			for (int j = 0; j < fbxMesh->GetControlPointsCount(); ++j)
-			{
-				mesh.Vertices.emplace_back(
-					static_cast<float>(vertices[j].mData[0]),
-					static_cast<float>(vertices[j].mData[1]),
-					static_cast<float>(vertices[j].mData[2]),
-					1.0f
-				);
-			}
-			auto indices = fbxMesh->GetPolygonVertices();
-			for (int j = 0; j < fbxMesh->GetPolygonCount(); ++j)
-			{
-				int iNumVertices = fbxMesh->GetPolygonSize(j);
-				BreakIfFalse(iNumVertices == 3);
-
-				for (int k = 0; k < iNumVertices; ++k)
-				{
-					int controlPointIndex = fbxMesh->GetPolygonVertex(j, k);
-					mesh.Indices.push_back(controlPointIndex);
-				}
-			}
-			readUVs(fbxMesh, mesh);
-			outModel.meshes.emplace_back(std::move(mesh));
+			std::vector<XMFLOAT2> textureCoordinates0 = readTextureCoords(fbxMesh);
+			outModel.meshes.emplace_back(readMeshTextured(fbxMesh, textureCoordinates0));
 		}
 		fbxScene->Destroy();
 		return true;
