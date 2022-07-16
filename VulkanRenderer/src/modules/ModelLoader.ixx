@@ -1,5 +1,4 @@
 module;
-#include <fbxsdk.h>
 #include <memory>
 #include <string>
 export module ModelLoader;
@@ -18,8 +17,6 @@ namespace gg
 
 	private:
 		bool LoadMeshes(std::string const& modelAbsolutePath, Model & outModel);
-
-		FbxManager* mFbxManager{};
 	};
 
 } // namespace gg
