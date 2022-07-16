@@ -77,17 +77,19 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(SolutionDir)lib;$(SolutionDir)lib\assimp\include;$(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\Include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;SDL2.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin;$(SolutionDir)lib\assimp\bin\Debug;$(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;SDL2.lib;assimp-vc142-mtd.lib;WinPixEventRuntime.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)</Command>
+      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)
+copy $(SolutionDir)lib\assimp\bin\Debug\assimp-vc142-mtd.dll $(TargetDir)
+copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -103,7 +105,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(SolutionDir)lib;$(SolutionDir)lib\assimp\include;$(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\Include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -111,11 +113,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;SDL2.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin;$(SolutionDir)lib\assimp\bin\Release;$(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;SDL2.lib;assimp-vc142-mt.lib;WinPixEventRuntime.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)</Command>
+      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)
+copy $(SolutionDir)lib\assimp\bin\Release\assimp-vc142-mt.dll $(TargetDir)
+copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -131,7 +135,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(ADOBE_FBX_SDK)\include;$(SolutionDir)lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;$(SolutionDir)lib;$(SolutionDir)lib\assimp\include;$(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\Include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -139,11 +143,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;SDL2.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(VULKAN_SDK)\Third-Party\Bin;$(SolutionDir)lib\assimp\bin\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;SDL2.lib;assimp-vc142-mt.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)</Command>
+      <Command>pwsh.exe $(ProjectDir)shaders\compile_shaders.ps1 $(Configuration)
+copy $(SolutionDir)lib\assimp\bin\Release\assimp-vc142-mt.dll $(TargetDir)
+copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
