@@ -98,7 +98,7 @@ int main()
     {
         auto app = Application::Init(width, height, window);
         auto modelLoader = app->GetModelLoader();
-        std::unique_ptr<Model> model{ modelLoader->LoadModel("../../models/textured_cube.fbx", "shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
+        std::unique_ptr<Model> model{ modelLoader->LoadModel("../../models/textured_cube.glb", "shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
         app->GetRenderer()->UploadGeometry(std::move(model));
         DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
     }

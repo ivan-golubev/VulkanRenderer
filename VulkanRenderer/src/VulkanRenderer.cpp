@@ -428,7 +428,7 @@ namespace gg
 	{
 		// TODO: move this outside of the renderer
 		int texWidth, texHeight, texChannels;
-		std::string textureFileAbsPath{ std::filesystem::absolute("../../textures/CubeColor.png").generic_string() };
+		std::string textureFileAbsPath{ std::filesystem::absolute("../../textures/CubeColor.tga").generic_string() };
 		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSizeBytes = texWidth * texHeight * 4;
 
