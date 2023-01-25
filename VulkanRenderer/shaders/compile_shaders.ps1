@@ -2,9 +2,8 @@ Param([Parameter(Mandatory=$true)][string]$Config)
 # Get PowerShell 7.2.1 or higher from the MS Store: https://aka.ms/Install-PowerShell
 
 $IsFinal=$($Config -eq "Final")
-# Vulkan SDK (1.2.182.0)
-$DxcPath="C:\VulkanSDK\1.2.182.0\Bin"
-$Compiler="${DxcPath}\dxc.exe"
+# Vulkan SDK Environment variable is set via VulkanSDK installer (https://vulkan.lunarg.com)
+$Compiler="${Env:VULKAN_SDK}\Bin\dxc.exe"
 $OutputDir="${PSScriptRoot}\..\bin\${Config}\shaders"
 $ShaderModel="6_0"
 
@@ -17,8 +16,10 @@ $OutputDir=Resolve-Path $OutputDir
 #compile shaders
 foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 	$Entry=[System.IO.Path]::GetFileNameWithoutExtension($file)
-	$AdditionalParamsVS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi",  "-Fd", "${OutputDir}\${Entry}_VS.pdb"
-	$AdditionalParamsPS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi",  "-Fd", "${OutputDir}\${Entry}_PS.pdb"
+	$AdditionalParamsVS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi"
+	#,  "-Fd", "${OutputDir}\${Entry}_VS.pdb"
+	$AdditionalParamsPS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi"
+	#,  "-Fd", "${OutputDir}\${Entry}_PS.pdb"
 
 	if($IsFinal) {
 		$AdditionalParamsPS=$AdditionalParamsVS="-Qstrip_debug"		
