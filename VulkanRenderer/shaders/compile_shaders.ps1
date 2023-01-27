@@ -5,7 +5,7 @@ $IsFinal=$($Config -eq "Final")
 # Vulkan SDK Environment variable is set via VulkanSDK installer (https://vulkan.lunarg.com)
 $Compiler="${Env:VULKAN_SDK}\Bin\dxc.exe"
 $OutputDir="${PSScriptRoot}\..\bin\${Config}\shaders"
-$ShaderModel="6_0"
+$ShaderModel="6_7"
 
 if (!(Test-Path -Path $OutputDir))
 {
@@ -16,10 +16,8 @@ $OutputDir=Resolve-Path $OutputDir
 #compile shaders
 foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 	$Entry=[System.IO.Path]::GetFileNameWithoutExtension($file)
-	$AdditionalParamsVS = "-fspv-target-env=vulkan1.3", "-spirv" 
-	#,  "-Fd", "${OutputDir}\${Entry}_VS.pdb"
+	$AdditionalParamsVS = "-fspv-target-env=vulkan1.3", "-spirv"
 	$AdditionalParamsPS = "-fspv-target-env=vulkan1.3", "-spirv"
-	#,  "-Fd", "${OutputDir}\${Entry}_PS.pdb"
 
 	if($IsFinal) {
 		$FinalParams = "-Qstrip_debug"
