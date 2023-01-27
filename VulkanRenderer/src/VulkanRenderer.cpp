@@ -93,10 +93,10 @@ namespace gg
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "gg Vulkan Renderer";
-		appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+		appInfo.applicationVersion = VK_HEADER_VERSION_COMPLETE;
 		appInfo.pEngineName = "gg Engine";
-		appInfo.engineVersion = VK_API_VERSION_1_0;
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		appInfo.engineVersion = VK_HEADER_VERSION_COMPLETE;
+		appInfo.apiVersion = VK_HEADER_VERSION_COMPLETE;
 
 		VkInstanceCreateInfo instInfo{};
 		instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
