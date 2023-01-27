@@ -16,13 +16,18 @@ $OutputDir=Resolve-Path $OutputDir
 #compile shaders
 foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 	$Entry=[System.IO.Path]::GetFileNameWithoutExtension($file)
-	$AdditionalParamsVS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi"
+	$AdditionalParamsVS = "-fspv-target-env=vulkan1.1", "-spirv" 
 	#,  "-Fd", "${OutputDir}\${Entry}_VS.pdb"
-	$AdditionalParamsPS="-fspv-target-env=vulkan1.1", "-spirv", "-Od", "-Zi"
+	$AdditionalParamsPS = "-fspv-target-env=vulkan1.1", "-spirv"
 	#,  "-Fd", "${OutputDir}\${Entry}_PS.pdb"
 
 	if($IsFinal) {
-		$AdditionalParamsPS=$AdditionalParamsVS="-Qstrip_debug"		
+		$FinalParams = "-Qstrip_debug"
+		$AdditionalParamsPS += , $FinalParams		
+	} else {
+		$DebugParams = "-Od", "-Zi"
+		$AdditionalParamsPS += , $DebugParams
+		$AdditionalParamsVS += , $DebugParams
 	}
 	& $Compiler -T vs_${ShaderModel} -E vs_main @AdditionalParamsVS $file -Fo ${OutputDir}\${Entry}_VS.spv
 	& $Compiler -T ps_${ShaderModel} -E ps_main @AdditionalParamsPS $file -Fo ${OutputDir}\${Entry}_PS.spv
